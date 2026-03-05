@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Apply for a loan — The Alliance Credit Company Ltd." />
+  <title>Apply Now | The Alliance Credit Company Ltd.</title>
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="pages.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+  <nav class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="../index.html" class="nav__logo">
+        <img src="../images/logo.png" alt="Alliance Credit Logo" class="logo__img" />
+        <div class="logo__text">
+          <span class="logo__name">The Alliance Credit Company</span>
+          <span class="logo__sub">Ltd. &nbsp;·&nbsp; Est. Dublin 2002 &nbsp;·&nbsp; Regulated Lender</span>
+        </div>
+      </a>
+      <ul class="nav__links" id="navLinks">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="pricing.html">Pricing</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="apply.html" class="nav__cta active">Apply Now</a></li>
+      </ul>
+      <button class="nav__burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="page-hero__orb page-hero__orb--1"></div>
+    <div class="page-hero__orb page-hero__orb--2"></div>
+    <div class="hero__grid"></div>
+    <div class="container">
+      <div class="page-hero__inner">
+        <div class="gold-rule"><span>Start Your Application</span></div>
+        <h1 class="page-hero__title">Apply <em>Now</em></h1>
+        <p class="page-hero__sub">Fill in the form below and our team will be in touch promptly to discuss your loan options.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section">
+    <div class="container">
+      <div class="apply-wrap">
+        <div class="apply-card reveal">
+
+          <p class="apply-section-title">Personal Details</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-input" placeholder="First name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-input" placeholder="Last name" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">PPSN</label>
+              <input type="text" class="form-input" placeholder="e.g. 1234567T" />
+              <p class="form-note">Required for Central Credit Register check.</p>
+            </div>
+          </div>
+
+          <p class="apply-section-title">Contact Details</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-input" placeholder="087 000 0000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" placeholder="your@email.com" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Home Address</label>
+            <input type="text" class="form-input" placeholder="Street address" style="margin-bottom:8px;" />
+            <div class="form-row">
+              <input type="text" class="form-input" placeholder="Town / City" />
+              <input type="text" class="form-input" placeholder="Eircode" />
+            </div>
+          </div>
+
+          <p class="apply-section-title">Loan Details</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Loan Amount</label>
+              <select class="form-select">
+                <option value="">Select amount</option>
+                <option>€500</option>
+                <option>€550</option>
+                <option>€600</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Repayment Term</label>
+              <select class="form-select">
+                <option value="">Select term</option>
+                <option>36 weeks</option>
+                <option>43 weeks</option>
+                <option>52 weeks</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Purpose of Loan</label>
+            <select class="form-select">
+              <option value="">Select purpose</option>
+              <option>Household expenses</option>
+              <option>Bills / utilities</option>
+              <option>Car expenses</option>
+              <option>Medical expenses</option>
+              <option>Education</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <p class="apply-section-title">Employment &amp; Income</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employment Status</label>
+              <select class="form-select">
+                <option value="">Select status</option>
+                <option>Employed (full-time)</option>
+                <option>Employed (part-time)</option>
+                <option>Self-employed</option>
+                <option>Social welfare</option>
+                <option>Retired</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Monthly Income (approx.)</label>
+              <input type="text" class="form-input" placeholder="e.g. €1,500" />
+            </div>
+          </div>
+
+          <p class="apply-section-title">Declaration</p>
+          <div class="apply-warning">
+            <p><strong style="color:rgba(248,245,238,0.55);">Warning: This is high-cost credit.</strong> The APR on this loan is 41.5%. Please ensure you have considered all available options before applying. If you are experiencing financial difficulty, contact MABS at www.mabs.ie.</p>
+          </div>
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="consent1" />
+              <label for="consent1">I confirm that the information provided is accurate and complete to the best of my knowledge.</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="consent2" />
+              <label for="consent2">I consent to The Alliance Credit Company Ltd. carrying out a check with the Central Credit Register (CCR) as part of this application.</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-checkbox">
+              <input type="checkbox" id="consent3" />
+              <label for="consent3">I have read and agree to the <a href="#">Privacy Policy</a> and <a href="#">Terms &amp; Conditions</a>.</label>
+            </div>
+          </div>
+          <button class="form-submit" style="margin-top:16px;">Submit Application</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a href="../index.html" class="nav__logo">
+            <img src="../images/logo.png" alt="Alliance Credit Logo" class="logo__img" />
+            <div class="logo__text">
+              <span class="logo__name">The Alliance Credit Company</span>
+              <span class="logo__sub">Ltd. &nbsp;·&nbsp; Est. 2002 &nbsp;·&nbsp; Dublin, Ireland</span>
+            </div>
+          </a>
+          <p class="footer__desc">Simple, fair and affordable finance for Irish customers. Irish-owned, based and run since 2002.</p>
+        </div>
+        <div class="footer__col"><h4>Pages</h4><ul><li><a href="../index.html">Home</a></li><li><a href="about.html">About Us</a></li><li><a href="services.html">Services</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="apply.html">Apply Now</a></li></ul></div>
+        <div class="footer__col"><h4>Loans</h4><ul><li>Cash Loans</li><li>Weekly Repayments</li><li>New Customer Loans</li><li>Returning Customers</li></ul></div>
+        <div class="footer__col"><h4>Contact</h4><ul><li><a href="tel:0872587170">087 258 7170</a></li><li><a href="tel:0872852399">087 285 2399</a></li><li><a href="mailto:thealliancecreditcompany@gmail.com">thealliancecreditcompany@gmail.com</a></li><li>73 Pearse Street</li><li>Dublin 2, D02 NW64</li></ul></div>
+      </div>
+      <div class="footer__reg"><p>The Alliance Credit Company Ltd. is regulated by the Central Bank of Ireland. Warning: This is high-cost credit. Consider alternative options before applying. If you are experiencing financial difficulty, contact MABS at www.mabs.ie. Loans of €500 or more will be registered with the Central Credit Register (CCR). Warning: If you do not meet the repayments on your loan, your account will go into arrears. This may affect your credit rating, which may limit your ability to access credit in the future.</p></div>
+      <div class="footer__bottom">
+        <p>© 2026 The Alliance Credit Company Ltd. All rights reserved. Registered in Ireland.</p>
+        <p>Website by <a href="https://cbyrne290-hub.github.io/driven-development" target="_blank">Driven Development</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../script.js"></script>
+  <script src="pages.js"></script>
+</body>
+</html>
