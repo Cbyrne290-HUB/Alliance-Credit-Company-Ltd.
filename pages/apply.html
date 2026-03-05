@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet" />
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC6Z3-placeholder&libraries=places"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -18,7 +19,6 @@
       padding-top: 80px;
     }
 
-    /* PROGRESS */
     .app-progress {
       position: fixed; top: 0; left: 0; right: 0; z-index: 2000;
       height: 3px; background: rgba(201,168,76,0.12);
@@ -28,7 +28,6 @@
       transition: width 0.4s ease;
     }
 
-    /* TOP NAV */
     .app-topnav {
       position: fixed; top: 3px; left: 0; right: 0; z-index: 1999;
       height: 60px; background: rgba(8,8,8,0.97);
@@ -58,7 +57,6 @@
       text-transform: uppercase;
     }
 
-    /* STEPS CONTAINER */
     .app-steps { flex: 1; }
     .app-step {
       display: none;
@@ -80,7 +78,6 @@
       color: var(--white-dim); line-height: 1.7; margin-bottom: 32px;
     }
 
-    /* OPTION LIST */
     .option-list { display: flex; flex-direction: column; gap: 2px; }
     .option-item {
       background: rgba(255,255,255,0.03);
@@ -98,7 +95,6 @@
     .option-arrow { color: rgba(248,245,238,0.2); transition: color 0.25s; }
     .option-arrow svg { width: 16px; height: 16px; }
 
-    /* TEXT INPUT STEP */
     .app-input {
       width: 100%; background: rgba(255,255,255,0.04);
       border: 1px solid rgba(201,168,76,0.15); border-radius: 12px;
@@ -108,8 +104,33 @@
     }
     .app-input:focus { border-color: rgba(201,168,76,0.5); }
     .app-input::placeholder { color: rgba(248,245,238,0.2); }
+    .app-input.error { border-color: rgba(220,50,50,0.6); }
 
-    /* CALCULATOR */
+    .field-error {
+      font-family: var(--font-times); font-size: 0.78rem;
+      color: #e05555; margin-top: -10px; margin-bottom: 14px;
+      padding-left: 4px; display: none;
+    }
+    .field-error.visible { display: block; }
+
+    /* ADDRESS AUTOCOMPLETE */
+    .address-wrap { position: relative; margin-bottom: 16px; }
+    .address-wrap .app-input { margin-bottom: 0; }
+    .address-suggestions {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #141414; border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 12px; z-index: 500; overflow: hidden;
+      display: none;
+    }
+    .address-suggestions.open { display: block; }
+    .address-suggestion-item {
+      padding: 14px 20px; font-family: var(--font-times); font-size: 0.9rem;
+      color: var(--white-dim); cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.2s;
+    }
+    .address-suggestion-item:last-child { border-bottom: none; }
+    .address-suggestion-item:hover { background: rgba(201,168,76,0.07); color: var(--gold-light); }
+
     .calc-step-group {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(201,168,76,0.1);
@@ -120,7 +141,7 @@
     .calc-step-val { font-family: var(--font-times); font-size: 1.1rem; font-weight: 700; color: var(--gold-light); }
     .calc-step-slider {
       -webkit-appearance: none; appearance: none; width: 100%; height: 2px;
-      background: linear-gradient(to right, var(--gold) 0%, var(--gold) var(--pct,20%), rgba(201,168,76,0.12) var(--pct,20%), rgba(201,168,76,0.12) 100%);
+      background: linear-gradient(to right, var(--gold) 0%, var(--gold) var(--pct,0%), rgba(201,168,76,0.12) var(--pct,0%), rgba(201,168,76,0.12) 100%);
       outline: none; cursor: pointer; border-radius: 2px; margin-bottom: 8px;
     }
     .calc-step-slider::-webkit-slider-thumb {
@@ -144,7 +165,6 @@
     .calc-result-row span:last-child { font-size: 0.9rem; font-weight: 700; color: var(--white); }
     .calc-result-row.primary span:last-child { color: var(--gold-light); font-size: 1rem; }
 
-    /* DOCUMENT UPLOAD */
     .doc-section { margin-bottom: 28px; }
     .doc-section-title {
       font-family: var(--font-times); font-size: 0.6rem;
@@ -161,8 +181,7 @@
       border: 1px dashed rgba(201,168,76,0.25);
       border-radius: 12px; padding: 24px 20px;
       text-align: center; cursor: pointer;
-      transition: all 0.25s ease; position: relative;
-      overflow: hidden;
+      transition: all 0.25s ease; position: relative; overflow: hidden;
     }
     .doc-upload:hover { background: rgba(201,168,76,0.04); border-color: rgba(201,168,76,0.45); }
     .doc-upload input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
@@ -172,7 +191,6 @@
     .doc-upload__sub { font-family: var(--font-times); font-size: 0.7rem; color: rgba(248,245,238,0.25); }
     .doc-upload__filename { font-family: var(--font-times); font-size: 0.78rem; color: var(--gold); margin-top: 8px; display: none; }
 
-    /* BOTTOM CTA */
     .app-bottom {
       position: fixed; bottom: 0; left: 0; right: 0;
       padding: 16px 24px 32px;
@@ -190,7 +208,50 @@
     .app-btn:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 8px 32px rgba(201,168,76,0.35); }
     .app-btn:disabled { background: rgba(201,168,76,0.2); color: rgba(0,0,0,0.4); cursor: not-allowed; transform: none; box-shadow: none; }
 
-    /* CONFIRMATION SCREEN */
+    /* REVIEW SCREEN */
+    .review-screen {
+      display: none; min-height: calc(100vh - 63px);
+      padding: 48px 24px 140px; max-width: 600px; margin: 0 auto;
+      flex-direction: column;
+    }
+    .review-screen.active { display: flex; animation: stepIn 0.35s ease both; }
+    .review-screen__title {
+      font-family: var(--font-times); font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 700; color: var(--white); margin-bottom: 8px; line-height: 1.1;
+    }
+    .review-screen__title em { font-style: italic; color: var(--gold-light); }
+    .review-screen__sub {
+      font-family: var(--font-times); font-size: 0.9rem;
+      color: var(--white-dim); line-height: 1.7; margin-bottom: 32px;
+    }
+    .review-section { margin-bottom: 24px; }
+    .review-section__label {
+      font-family: var(--font-times); font-size: 0.58rem;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 8px; display: block;
+    }
+    .review-block {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(201,168,76,0.1);
+      border-radius: 12px; overflow: hidden;
+    }
+    .review-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 16px;
+    }
+    .review-row:last-child { border-bottom: none; }
+    .review-row__key {
+      font-family: var(--font-times); font-size: 0.78rem;
+      color: var(--white-dim); flex-shrink: 0;
+    }
+    .review-row__val {
+      font-family: var(--font-times); font-size: 0.82rem;
+      color: var(--white); font-weight: 700; text-align: right;
+    }
+    .review-row__val.gold { color: var(--gold-light); }
+
+    /* CONFIRM SCREEN */
     .confirm-screen {
       min-height: calc(100vh - 63px);
       display: none; flex-direction: column;
@@ -209,29 +270,32 @@
     .confirm-title { font-family: var(--font-times); font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 700; color: var(--white); margin-bottom: 16px; line-height: 1.1; }
     .confirm-title em { font-style: italic; color: var(--gold-light); }
     .confirm-sub { font-family: var(--font-times); font-size: 0.95rem; color: var(--white-dim); line-height: 1.8; max-width: 420px; margin: 0 auto 32px; }
-    .confirm-details { background: rgba(255,255,255,0.02); border: 1px solid rgba(201,168,76,0.1); border-radius: 12px; padding: 20px 24px; max-width: 360px; margin: 0 auto 32px; }
-    .confirm-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-family: var(--font-times); }
-    .confirm-row:last-child { border-bottom: none; }
-    .confirm-row span:first-child { font-size: 0.78rem; color: var(--white-dim); }
-    .confirm-row span:last-child { font-size: 0.82rem; color: var(--gold-light); font-weight: 700; }
     .confirm-home { display: inline-block; margin-top: 8px; font-family: var(--font-times); font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(201,168,76,0.3); padding: 12px 32px; border-radius: 8px; text-decoration: none; transition: all 0.3s; }
     .confirm-home:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); }
 
-    /* PERSONAL DETAILS GRID */
     .app-input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media(max-width:480px) { .app-input-row { grid-template-columns: 1fr; } }
 
-    /* WARNING BOX INLINE */
     .app-warning {
       background: rgba(201,168,76,0.02); border-left: 2px solid rgba(201,168,76,0.2);
       padding: 12px 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;
     }
     .app-warning p { font-family: var(--font-times); font-size: 0.72rem; color: rgba(248,245,238,0.3); line-height: 1.7; font-style: italic; }
 
-    /* CONSENT */
     .app-consent { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
     .app-consent input { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer; }
     .app-consent label { font-family: var(--font-times); font-size: 0.78rem; color: var(--white-dim); line-height: 1.6; cursor: pointer; }
+
+    /* Google autocomplete dropdown override */
+    .pac-container {
+      background: #141414 !important; border: 1px solid rgba(201,168,76,0.2) !important;
+      border-radius: 12px !important; margin-top: 4px !important;
+      font-family: var(--font-times) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+    }
+    .pac-item { padding: 12px 16px !important; color: rgba(248,245,238,0.7) !important; border-top: 1px solid rgba(255,255,255,0.04) !important; cursor: pointer !important; }
+    .pac-item:hover { background: rgba(201,168,76,0.07) !important; }
+    .pac-item-query { color: var(--white) !important; font-size: 0.9rem !important; }
+    .pac-matched { color: var(--gold-light) !important; }
   </style>
 </head>
 <body>
@@ -307,7 +371,7 @@
       <!-- STEP 4: DEPENDANTS -->
       <div class="app-step" id="step4">
         <h1 class="app-step__title">Financial <em>Dependants</em></h1>
-        <p class="app-step__sub">How many people depend on you financially? This may include children, relatives or a spouse.</p>
+        <p class="app-step__sub">How many people depend on you financially?</p>
         <div class="option-list">
           <div class="option-item" onclick="selectOption('dependants','None')">None <span class="option-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span></div>
           <div class="option-item" onclick="selectOption('dependants','1')">1 <span class="option-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span></div>
@@ -374,7 +438,8 @@
       <div class="app-step" id="step10">
         <h1 class="app-step__title"><em>PPSN</em></h1>
         <p class="app-step__sub">What is your Personal Public Service Number? Required for the Central Credit Register check.</p>
-        <input type="text" class="app-input" id="s10PPSN" placeholder="e.g. 1234567T" oninput="checkInput('s10PPSN','s10Btn')" />
+        <input type="text" class="app-input" id="s10PPSN" placeholder="e.g. 1234567T" oninput="checkPPSN()" />
+        <p class="field-error" id="ppsnError">Please enter at least 5 characters for your PPSN.</p>
         <div class="app-bottom"><button class="app-btn" id="s10Btn" disabled onclick="nextStep()">Continue</button></div>
       </div>
 
@@ -386,17 +451,21 @@
           <input type="text" class="app-input" id="s11First" placeholder="First name" oninput="checkPersonal()" />
           <input type="text" class="app-input" id="s11Last" placeholder="Last name" oninput="checkPersonal()" />
         </div>
-        <input type="date" class="app-input" id="s11DOB" oninput="checkPersonal()" />
+        <input type="date" class="app-input" id="s11DOB" onchange="checkPersonal()" />
+        <p class="field-error" id="dobError">You must be 25 or older to apply for a loan with us.</p>
         <input type="tel" class="app-input" id="s11Phone" placeholder="Phone number" oninput="checkPersonal()" />
         <input type="email" class="app-input" id="s11Email" placeholder="Email address" oninput="checkPersonal()" />
-        <input type="text" class="app-input" id="s11Address" placeholder="Home address" oninput="checkPersonal()" />
+        <div class="address-wrap">
+          <input type="text" class="app-input" id="s11Address" placeholder="Start typing your address..." autocomplete="off" oninput="checkPersonal()" />
+          <div class="address-suggestions" id="addressSuggestions"></div>
+        </div>
         <div class="app-bottom"><button class="app-btn" id="s11Btn" disabled onclick="nextStep()">Continue</button></div>
       </div>
 
-      <!-- STEP 12: PERSONAL DETAILS CONT -->
+      <!-- STEP 12: BANK ACCOUNT -->
       <div class="app-step" id="step12">
         <h1 class="app-step__title">Bank <em>Account</em></h1>
-        <p class="app-step__sub">Where would you like the funds lodged if approved? Enter your IBAN below.</p>
+        <p class="app-step__sub">Where would you like the funds lodged if approved?</p>
         <input type="text" class="app-input" id="s12IBAN" placeholder="IE00 XXXX 0000 0000 0000 00" oninput="checkInput('s12IBAN','s12Btn')" />
         <input type="text" class="app-input" id="s12BIC" placeholder="BIC / Sort Code" oninput="checkInput('s12IBAN','s12Btn')" />
         <div class="app-bottom"><button class="app-btn" id="s12Btn" disabled onclick="nextStep()">Continue</button></div>
@@ -405,13 +474,13 @@
       <!-- STEP 13: DOCUMENTS -->
       <div class="app-step" id="step13">
         <h1 class="app-step__title">Your <em>Documents</em></h1>
-        <p class="app-step__sub">Please attach the required documents below. You can upload photos or scans.</p>
+        <p class="app-step__sub">Please attach the required documents. You can upload photos or scans.</p>
 
         <div class="doc-section">
           <span class="doc-section-title">Proof of ID</span>
           <p class="doc-section-examples">e.g. Passport, Driving Licence, National ID Card, Public Services Card</p>
-          <div class="doc-upload" onclick="this.querySelector('input').click()">
-            <input type="file" accept="image/*,.pdf" onchange="fileSelected(this,'doc-id-label','doc-id-name')" />
+          <div class="doc-upload">
+            <input type="file" accept="image/*,.pdf" id="docID" onchange="fileSelected(this,'doc-id-label','doc-id-name')" />
             <div class="doc-upload__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
             <span class="doc-upload__label" id="doc-id-label">Tap to upload</span>
             <span class="doc-upload__sub">JPG, PNG or PDF</span>
@@ -422,8 +491,8 @@
         <div class="doc-section">
           <span class="doc-section-title">Proof of Address</span>
           <p class="doc-section-examples">e.g. Utility Bill, Bank Statement, Official Government Letter — dated within last 3 months</p>
-          <div class="doc-upload" onclick="this.querySelector('input').click()">
-            <input type="file" accept="image/*,.pdf" onchange="fileSelected(this,'doc-addr-label','doc-addr-name')" />
+          <div class="doc-upload">
+            <input type="file" accept="image/*,.pdf" id="docAddr" onchange="fileSelected(this,'doc-addr-label','doc-addr-name')" />
             <div class="doc-upload__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
             <span class="doc-upload__label" id="doc-addr-label">Tap to upload</span>
             <span class="doc-upload__sub">JPG, PNG or PDF</span>
@@ -434,8 +503,8 @@
         <div class="doc-section">
           <span class="doc-section-title">Proof of Income</span>
           <p class="doc-section-examples">e.g. Recent Payslips, Social Welfare Statement, Bank Statements — last 2 months</p>
-          <div class="doc-upload" onclick="this.querySelector('input').click()">
-            <input type="file" accept="image/*,.pdf" onchange="fileSelected(this,'doc-inc-label','doc-inc-name')" />
+          <div class="doc-upload">
+            <input type="file" accept="image/*,.pdf" id="docIncome" onchange="fileSelected(this,'doc-inc-label','doc-inc-name')" />
             <div class="doc-upload__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
             <span class="doc-upload__label" id="doc-inc-label">Tap to upload</span>
             <span class="doc-upload__sub">JPG, PNG or PDF</span>
@@ -446,8 +515,8 @@
         <div class="doc-section">
           <span class="doc-section-title">Proof of PPSN</span>
           <p class="doc-section-examples">e.g. Public Services Card, Social Welfare Letter, Revenue Letter showing your PPSN</p>
-          <div class="doc-upload" onclick="this.querySelector('input').click()">
-            <input type="file" accept="image/*,.pdf" onchange="fileSelected(this,'doc-ppsn-label','doc-ppsn-name')" />
+          <div class="doc-upload">
+            <input type="file" accept="image/*,.pdf" id="docPPSN" onchange="fileSelected(this,'doc-ppsn-label','doc-ppsn-name')" />
             <div class="doc-upload__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
             <span class="doc-upload__label" id="doc-ppsn-label">Tap to upload</span>
             <span class="doc-upload__sub">JPG, PNG or PDF</span>
@@ -455,8 +524,71 @@
           </div>
         </div>
 
-        <div class="app-warning" style="margin-top:8px;">
-          <p>By submitting this application you confirm all information provided is accurate and you consent to a Central Credit Register check. Warning: This is high-cost credit. APR 41.5%.</p>
+        <div style="height:100px;"></div>
+        <div class="app-bottom"><button class="app-btn" onclick="showReview()">Review Application</button></div>
+      </div>
+
+      <!-- REVIEW SCREEN -->
+      <div class="review-screen" id="reviewScreen">
+        <h1 class="review-screen__title">Review Your <em>Application</em></h1>
+        <p class="review-screen__sub">Please check everything below carefully before submitting. Once submitted your application will be sent directly to our team.</p>
+
+        <div class="review-section">
+          <span class="review-section__label">Loan Details</span>
+          <div class="review-block">
+            <div class="review-row"><span class="review-row__key">Loan Amount</span><span class="review-row__val gold" id="rev-amount">—</span></div>
+            <div class="review-row"><span class="review-row__key">Weekly Repayment</span><span class="review-row__val gold" id="rev-weekly">—</span></div>
+            <div class="review-row"><span class="review-row__key">Term</span><span class="review-row__val" id="rev-term">—</span></div>
+            <div class="review-row"><span class="review-row__key">Total Repayable</span><span class="review-row__val" id="rev-total">—</span></div>
+            <div class="review-row"><span class="review-row__key">Purpose</span><span class="review-row__val" id="rev-purpose">—</span></div>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <span class="review-section__label">Personal Details</span>
+          <div class="review-block">
+            <div class="review-row"><span class="review-row__key">Full Name</span><span class="review-row__val" id="rev-name">—</span></div>
+            <div class="review-row"><span class="review-row__key">Date of Birth</span><span class="review-row__val" id="rev-dob">—</span></div>
+            <div class="review-row"><span class="review-row__key">Phone</span><span class="review-row__val" id="rev-phone">—</span></div>
+            <div class="review-row"><span class="review-row__key">Email</span><span class="review-row__val" id="rev-email">—</span></div>
+            <div class="review-row"><span class="review-row__key">Address</span><span class="review-row__val" id="rev-address">—</span></div>
+            <div class="review-row"><span class="review-row__key">PPSN</span><span class="review-row__val" id="rev-ppsn">—</span></div>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <span class="review-section__label">Financial Details</span>
+          <div class="review-block">
+            <div class="review-row"><span class="review-row__key">Marital Status</span><span class="review-row__val" id="rev-marital">—</span></div>
+            <div class="review-row"><span class="review-row__key">Dependants</span><span class="review-row__val" id="rev-dependants">—</span></div>
+            <div class="review-row"><span class="review-row__key">Employment</span><span class="review-row__val" id="rev-employment">—</span></div>
+            <div class="review-row"><span class="review-row__key">Income Frequency</span><span class="review-row__val" id="rev-frequency">—</span></div>
+            <div class="review-row"><span class="review-row__key">Monthly Income</span><span class="review-row__val" id="rev-income">—</span></div>
+            <div class="review-row"><span class="review-row__key">Residential Status</span><span class="review-row__val" id="rev-residential">—</span></div>
+            <div class="review-row"><span class="review-row__key">Housing Cost</span><span class="review-row__val" id="rev-housing">—</span></div>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <span class="review-section__label">Bank Details</span>
+          <div class="review-block">
+            <div class="review-row"><span class="review-row__key">IBAN</span><span class="review-row__val" id="rev-iban">—</span></div>
+            <div class="review-row"><span class="review-row__key">BIC</span><span class="review-row__val" id="rev-bic">—</span></div>
+          </div>
+        </div>
+
+        <div class="review-section">
+          <span class="review-section__label">Documents</span>
+          <div class="review-block">
+            <div class="review-row"><span class="review-row__key">Proof of ID</span><span class="review-row__val" id="rev-doc-id">—</span></div>
+            <div class="review-row"><span class="review-row__key">Proof of Address</span><span class="review-row__val" id="rev-doc-addr">—</span></div>
+            <div class="review-row"><span class="review-row__key">Proof of Income</span><span class="review-row__val" id="rev-doc-inc">—</span></div>
+            <div class="review-row"><span class="review-row__key">Proof of PPSN</span><span class="review-row__val" id="rev-doc-ppsn">—</span></div>
+          </div>
+        </div>
+
+        <div class="app-warning">
+          <p>Warning: This is high-cost credit. APR 41.5%. By submitting you consent to a CCR check and confirm all information is accurate.</p>
         </div>
         <div class="app-consent">
           <input type="checkbox" id="consent1" onchange="checkConsent()" />
@@ -464,14 +596,14 @@
         </div>
         <div class="app-consent">
           <input type="checkbox" id="consent2" onchange="checkConsent()" />
-          <label for="consent2">I consent to a Central Credit Register (CCR) check as part of this application.</label>
+          <label for="consent2">I consent to a Central Credit Register (CCR) check.</label>
         </div>
         <div class="app-consent">
           <input type="checkbox" id="consent3" onchange="checkConsent()" />
-          <label for="consent3">I have read and agree to the Privacy Policy and Terms & Conditions.</label>
+          <label for="consent3">I agree to the Privacy Policy and Terms & Conditions.</label>
         </div>
         <div style="height:100px;"></div>
-        <div class="app-bottom"><button class="app-btn" id="s13Btn" disabled onclick="submitApp()">Submit Application</button></div>
+        <div class="app-bottom"><button class="app-btn" id="submitBtn" disabled onclick="submitApp()">Submit Application</button></div>
       </div>
 
       <!-- CONFIRMATION -->
@@ -480,13 +612,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <h1 class="confirm-title">Thank you — we'll be in <em>touch shortly.</em></h1>
-        <p class="confirm-sub">Your application has been received. A member of our team will contact you within 1–2 business days to discuss your loan offer.</p>
-        <div class="confirm-details">
-          <div class="confirm-row"><span>Loan Amount</span><span id="conf-amount">—</span></div>
-          <div class="confirm-row"><span>Weekly Repayment</span><span id="conf-weekly">—</span></div>
-          <div class="confirm-row"><span>Term</span><span id="conf-term">—</span></div>
-          <div class="confirm-row"><span>Contact</span><span id="conf-phone">—</span></div>
-        </div>
+        <p class="confirm-sub">Your application has been received by our team. We will contact you within 1–2 business days on the phone number you provided to discuss your loan offer.</p>
         <a href="../index.html" class="confirm-home">Back to Home</a>
       </div>
 
@@ -501,16 +627,15 @@
     const TOTAL_STEPS = 13;
     let currentStep = 1;
     const appData = {};
-
     const terms = [36, 43, 52];
     const APR = 0.415;
 
+    // ── CALCULATOR ──────────────────────────────────────
     function updateCalc() {
       const amt = parseInt(document.getElementById('s1AmtSlider').value);
       const termIdx = parseInt(document.getElementById('s1TermSlider').value);
       const weeks = terms[termIdx];
-      const annualRate = APR;
-      const weeklyRate = annualRate / 52;
+      const weeklyRate = APR / 52;
       const weekly = amt * weeklyRate / (1 - Math.pow(1 + weeklyRate, -weeks));
       const total = weekly * weeks;
       const cost = total - amt;
@@ -524,32 +649,24 @@
       appData.amount = '€' + amt.toLocaleString();
       appData.weekly = '€' + weekly.toFixed(2);
       appData.term = weeks + ' weeks';
+      appData.totalRepayable = '€' + total.toFixed(2);
 
-      // Update slider fill
-      const amtSlider = document.getElementById('s1AmtSlider');
-      const amtPct = ((amt - 500) / (2000 - 500)) * 100;
-      amtSlider.style.setProperty('--pct', amtPct + '%');
-
-      const termSlider = document.getElementById('s1TermSlider');
-      termSlider.style.setProperty('--pct', (termIdx / 2 * 100) + '%');
+      document.getElementById('s1AmtSlider').style.setProperty('--pct', ((amt - 500) / 1500 * 100) + '%');
+      document.getElementById('s1TermSlider').style.setProperty('--pct', (termIdx / 2 * 100) + '%');
     }
 
+    // ── NAVIGATION ───────────────────────────────────────
     function selectOption(key, value) {
       appData[key] = value;
       nextStep();
     }
 
     function nextStep() {
-      if (currentStep === 1) {
-        document.getElementById('step1Bottom').style.display = 'none';
-      }
+      if (currentStep === 1) document.getElementById('step1Bottom').style.display = 'none';
       const curr = document.getElementById('step' + currentStep);
       if (curr) curr.classList.remove('active');
       currentStep++;
-      if (currentStep > TOTAL_STEPS) {
-        showConfirm();
-        return;
-      }
+      if (currentStep > TOTAL_STEPS) { showReview(); return; }
       const next = document.getElementById('step' + currentStep);
       if (next) next.classList.add('active');
       updateUI();
@@ -558,12 +675,20 @@
 
     function prevStep() {
       if (currentStep <= 1) return;
+      // if on review screen go back to step 13
+      const reviewActive = document.getElementById('reviewScreen').classList.contains('active');
+      if (reviewActive) {
+        document.getElementById('reviewScreen').classList.remove('active');
+        currentStep = 13;
+        document.getElementById('step13').classList.add('active');
+        updateUI();
+        window.scrollTo(0, 0);
+        return;
+      }
       const curr = document.getElementById('step' + currentStep);
       if (curr) curr.classList.remove('active');
       currentStep--;
-      if (currentStep === 1) {
-        document.getElementById('step1Bottom').style.display = 'block';
-      }
+      if (currentStep === 1) document.getElementById('step1Bottom').style.display = 'block';
       const prev = document.getElementById('step' + currentStep);
       if (prev) prev.classList.add('active');
       updateUI();
@@ -574,31 +699,71 @@
       const pct = ((currentStep - 1) / TOTAL_STEPS) * 100;
       document.getElementById('progressBar').style.width = pct + '%';
       document.getElementById('stepCount').textContent = 'Step ' + currentStep + ' of ' + TOTAL_STEPS;
-      const backBtn = document.getElementById('backBtn');
-      if (currentStep > 1) { backBtn.classList.remove('hidden'); } else { backBtn.classList.add('hidden'); }
+      document.getElementById('backBtn').classList.toggle('hidden', currentStep <= 1);
     }
 
+    // ── VALIDATION ───────────────────────────────────────
     function checkInput(inputId, btnId) {
       const val = document.getElementById(inputId).value.trim();
       document.getElementById(btnId).disabled = val === '';
     }
 
+    function checkPPSN() {
+      const val = document.getElementById('s10PPSN').value.trim();
+      const err = document.getElementById('ppsnError');
+      const btn = document.getElementById('s10Btn');
+      if (val.length > 0 && val.length < 5) {
+        err.classList.add('visible');
+        document.getElementById('s10PPSN').classList.add('error');
+        btn.disabled = true;
+      } else {
+        err.classList.remove('visible');
+        document.getElementById('s10PPSN').classList.remove('error');
+        btn.disabled = val.length < 5;
+      }
+    }
+
     function checkPersonal() {
-      const fields = ['s11First','s11Last','s11DOB','s11Phone','s11Email','s11Address'];
-      const allFilled = fields.every(id => document.getElementById(id).value.trim() !== '');
-      document.getElementById('s11Btn').disabled = !allFilled;
+      const first = document.getElementById('s11First').value.trim();
+      const last  = document.getElementById('s11Last').value.trim();
+      const dob   = document.getElementById('s11DOB').value;
+      const phone = document.getElementById('s11Phone').value.trim();
+      const email = document.getElementById('s11Email').value.trim();
+      const addr  = document.getElementById('s11Address').value.trim();
+      const dobErr = document.getElementById('dobError');
+      const dobInput = document.getElementById('s11DOB');
+
+      let ageOk = true;
+      if (dob) {
+        const birth = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        if (age < 25) {
+          ageOk = false;
+          dobErr.classList.add('visible');
+          dobInput.classList.add('error');
+        } else {
+          dobErr.classList.remove('visible');
+          dobInput.classList.remove('error');
+        }
+      }
+
+      const allFilled = first && last && dob && phone && email && addr;
+      document.getElementById('s11Btn').disabled = !(allFilled && ageOk);
     }
 
     function checkConsent() {
       const c1 = document.getElementById('consent1').checked;
       const c2 = document.getElementById('consent2').checked;
       const c3 = document.getElementById('consent3').checked;
-      document.getElementById('s13Btn').disabled = !(c1 && c2 && c3);
+      document.getElementById('submitBtn').disabled = !(c1 && c2 && c3);
     }
 
     function fileSelected(input, labelId, nameId) {
       if (input.files && input.files[0]) {
-        document.getElementById(labelId).textContent = '✓ File attached';
+        document.getElementById(labelId).textContent = '✓ Attached';
         const nameEl = document.getElementById(nameId);
         nameEl.textContent = input.files[0].name;
         nameEl.style.display = 'block';
@@ -607,20 +772,97 @@
       }
     }
 
-    function showConfirm() {
+    // ── ADDRESS AUTOCOMPLETE ─────────────────────────────
+    // Uses OpenStreetMap Nominatim — free, no API key needed
+    let addressTimer;
+    document.addEventListener('DOMContentLoaded', () => {
+      const input = document.getElementById('s11Address');
+      const suggestions = document.getElementById('addressSuggestions');
+
+      input.addEventListener('input', () => {
+        clearTimeout(addressTimer);
+        const q = input.value.trim();
+        if (q.length < 3) { suggestions.classList.remove('open'); return; }
+        addressTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=ie&limit=5&q=${encodeURIComponent(q)}`);
+            const data = await res.json();
+            suggestions.innerHTML = '';
+            if (data.length === 0) { suggestions.classList.remove('open'); return; }
+            data.forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'address-suggestion-item';
+              div.textContent = item.display_name;
+              div.onclick = () => {
+                input.value = item.display_name;
+                suggestions.classList.remove('open');
+                checkPersonal();
+              };
+              suggestions.appendChild(div);
+            });
+            suggestions.classList.add('open');
+          } catch(e) { suggestions.classList.remove('open'); }
+        }, 350);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.address-wrap')) suggestions.classList.remove('open');
+      });
+    });
+
+    // ── REVIEW ───────────────────────────────────────────
+    function showReview() {
       document.querySelectorAll('.app-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step1Bottom').style.display = 'none';
+
+      // populate all review fields
+      document.getElementById('rev-amount').textContent    = appData.amount || '—';
+      document.getElementById('rev-weekly').textContent    = appData.weekly || '—';
+      document.getElementById('rev-term').textContent      = appData.term || '—';
+      document.getElementById('rev-total').textContent     = appData.totalRepayable || '—';
+      document.getElementById('rev-purpose').textContent   = appData.purpose || '—';
+      document.getElementById('rev-marital').textContent   = appData.marital || '—';
+      document.getElementById('rev-dependants').textContent = appData.dependants || '—';
+      document.getElementById('rev-employment').textContent = appData.employment || '—';
+      document.getElementById('rev-frequency').textContent  = appData.frequency || '—';
+      document.getElementById('rev-income').textContent    = document.getElementById('s7Income')?.value ? '€' + document.getElementById('s7Income').value : '—';
+      document.getElementById('rev-residential').textContent = appData.residential || '—';
+      document.getElementById('rev-housing').textContent   = document.getElementById('s9Housing')?.value ? '€' + document.getElementById('s9Housing').value + '/mo' : '—';
+      document.getElementById('rev-ppsn').textContent      = document.getElementById('s10PPSN')?.value || '—';
+      document.getElementById('rev-name').textContent      = (document.getElementById('s11First')?.value + ' ' + document.getElementById('s11Last')?.value).trim() || '—';
+      document.getElementById('rev-dob').textContent       = document.getElementById('s11DOB')?.value || '—';
+      document.getElementById('rev-phone').textContent     = document.getElementById('s11Phone')?.value || '—';
+      document.getElementById('rev-email').textContent     = document.getElementById('s11Email')?.value || '—';
+      document.getElementById('rev-address').textContent   = document.getElementById('s11Address')?.value || '—';
+      document.getElementById('rev-iban').textContent      = document.getElementById('s12IBAN')?.value || '—';
+      document.getElementById('rev-bic').textContent       = document.getElementById('s12BIC')?.value || '—';
+
+      const docID   = document.getElementById('docID');
+      const docAddr = document.getElementById('docAddr');
+      const docInc  = document.getElementById('docIncome');
+      const docPPSN = document.getElementById('docPPSN');
+      document.getElementById('rev-doc-id').textContent   = docID?.files[0]?.name || 'Not uploaded';
+      document.getElementById('rev-doc-addr').textContent = docAddr?.files[0]?.name || 'Not uploaded';
+      document.getElementById('rev-doc-inc').textContent  = docInc?.files[0]?.name || 'Not uploaded';
+      document.getElementById('rev-doc-ppsn').textContent = docPPSN?.files[0]?.name || 'Not uploaded';
+
+      document.getElementById('reviewScreen').classList.add('active');
+      document.getElementById('backBtn').classList.remove('hidden');
+      document.getElementById('stepCount').textContent = 'Review';
+      document.getElementById('progressBar').style.width = '96%';
+      window.scrollTo(0, 0);
+    }
+
+    // ── SUBMIT ───────────────────────────────────────────
+    function submitApp() {
+      document.getElementById('reviewScreen').classList.remove('active');
       document.getElementById('confirmScreen').classList.add('active');
       document.getElementById('backBtn').classList.add('hidden');
       document.getElementById('stepCount').textContent = 'Complete';
       document.getElementById('progressBar').style.width = '100%';
-      document.querySelector('.app-bottom') && (document.querySelector('.app-bottom').style.display = 'none');
-      document.getElementById('conf-amount').textContent = appData.amount || '—';
-      document.getElementById('conf-weekly').textContent = appData.weekly || '—';
-      document.getElementById('conf-term').textContent = appData.term || '—';
-      document.getElementById('conf-phone').textContent = document.getElementById('s11Phone')?.value || '—';
+      document.getElementById('step1Bottom').style.display = 'none';
+      window.scrollTo(0, 0);
     }
-
-    function submitApp() { showConfirm(); }
 
     // Init
     updateCalc();
