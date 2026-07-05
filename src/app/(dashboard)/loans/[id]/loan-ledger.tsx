@@ -8,6 +8,7 @@ import { findNextPendingRow, savePaymentForRow, weeksRemaining } from "@/lib/loa
 import { PageHeader } from "@/components/layout/page-header";
 import { WeekLabel } from "@/components/ui/week-label";
 import { useAgentContext } from "@/components/agent/agent-provider";
+import { ArrearsReminderButton } from "@/components/messaging/arrears-reminder-button";
 import type { Loan, Payment } from "@/types/loan";
 import type { Customer } from "@/types/customer";
 
@@ -28,7 +29,7 @@ export function LoanLedger({
 }: {
   loan: Loan;
   payments: Payment[];
-  customer: Pick<Customer, "id" | "first_name" | "surname"> | null;
+  customer: Pick<Customer, "id" | "first_name" | "surname" | "phone"> | null;
 }) {
   const [paymentsState, setPaymentsState] = useState(payments);
   const [loanState, setLoanState] = useState<LoanState>({
@@ -154,9 +155,16 @@ export function LoanLedger({
           </div>
 
           {loanState.arrears > 0 && !isCleared && (
-            <p className="mt-2 text-sm text-red-600">
-              In arrears: {formatCurrency(loanState.arrears)}
-            </p>
+            <div className="mt-3 flex items-center justify-between gap-4">
+              <p className="text-sm text-red-600">
+                In arrears: {formatCurrency(loanState.arrears)}
+              </p>
+              <ArrearsReminderButton
+                loanId={loan.id}
+                customerName={customerName}
+                phone={customer?.phone ?? null}
+              />
+            </div>
           )}
 
           <dl className="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-3">

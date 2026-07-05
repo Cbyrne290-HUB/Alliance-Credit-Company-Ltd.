@@ -29,7 +29,7 @@ export default async function LoanLedgerPage({
     loan.customer_id
       ? supabase
           .from("customers")
-          .select("id, first_name, surname")
+          .select("id, first_name, surname, phone")
           .eq("id", loan.customer_id)
           .eq("agent", activeAgent)
           .single()
@@ -44,7 +44,7 @@ export default async function LoanLedgerPage({
 
   const customer = customerData as Pick<
     Customer,
-    "id" | "first_name" | "surname"
+    "id" | "first_name" | "surname" | "phone"
   > | null;
   const payments = (paymentsData ?? []) as Payment[];
 

@@ -37,6 +37,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAgentContext } from "@/components/agent/agent-provider";
+import { ChristmasBroadcastButton } from "@/components/messaging/christmas-broadcast-button";
 
 type DateRange = { start: string; end: string };
 
@@ -175,6 +176,15 @@ export function DashboardHome({
                 initialRange={initialRange}
                 onRangeChange={handleRangeChange}
               />
+            </ChartCard>
+
+            <ChartCard title="Messaging">
+              <p className="text-sm text-slate-500">
+                Send a one-off broadcast text to every active customer.
+              </p>
+              <div className="mt-4">
+                <ChristmasBroadcastButton />
+              </div>
             </ChartCard>
           </div>
 
