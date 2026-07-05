@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Wallet,
+  Scale,
   Users,
   FileBarChart,
   UserCog,
@@ -16,13 +17,15 @@ import {
 const NAV_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/collections", label: "Collections", icon: Wallet },
+  { href: "/balancing", label: "Balancing", icon: Scale },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/reports", label: "Reports", icon: FileBarChart },
   { href: "/users", label: "Users", icon: UserCog },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-function isActive(href: string, pathname: string) {
+function isActive(href: string, pathname: string | null) {
+  if (!pathname) return false;
   if (href === "/customers") {
     return pathname.startsWith("/customers") || pathname.startsWith("/loans");
   }
