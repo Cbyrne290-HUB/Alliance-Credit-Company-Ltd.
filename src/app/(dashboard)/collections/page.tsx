@@ -38,22 +38,28 @@ export default async function CollectionsPage() {
     customerIds.length > 0
       ? await supabase
           .from("customers")
-          .select("id, first_name, surname, account_number, walking_order")
+          .select("id, first_name, surname, account_number, address, walking_order")
           .in("id", customerIds)
           .eq("agent", activeAgent)
       : { data: [] };
 
   const customerInfo = new Map<
     string,
-    { name: string; accountNumber: string; walkingOrder: number | null }
+    {
+      name: string;
+      accountNumber: string;
+      address: string | null;
+      walkingOrder: number | null;
+    }
   >();
   for (const c of (customersData ?? []) as Pick<
     Customer,
-    "id" | "first_name" | "surname" | "account_number" | "walking_order"
+    "id" | "first_name" | "surname" | "account_number" | "address" | "walking_order"
   >[]) {
     customerInfo.set(c.id, {
       name: `${c.first_name} ${c.surname}`,
       accountNumber: c.account_number,
+      address: c.address,
       walkingOrder: c.walking_order,
     });
   }
@@ -67,6 +73,7 @@ export default async function CollectionsPage() {
         customerId: l.customer_id ?? "",
         customerName: info?.name ?? "Unknown Customer",
         accountNumber: info?.accountNumber ?? "",
+        address: info?.address ?? null,
         walkingOrder: info?.walkingOrder ?? null,
         status: l.status ?? "active",
         weeklyPayment: l.weekly_payment,

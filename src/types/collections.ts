@@ -4,6 +4,7 @@ export type CollectionLoan = {
   customerId: string;
   customerName: string;
   accountNumber: string;
+  address: string | null;
   walkingOrder: number | null;
   status: string;
   weeklyPayment: number;

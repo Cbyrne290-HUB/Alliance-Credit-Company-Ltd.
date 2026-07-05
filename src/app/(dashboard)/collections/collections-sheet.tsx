@@ -398,26 +398,56 @@ export function CollectionsSheet({
       </div>
 
       <div id="print-collection-sheet" className="hidden print:block">
-        {printPages.map((page, pageIndex) => (
-          <div key={pageIndex} className={pageIndex > 0 ? "break-before-page" : ""}>
-            <p className="text-lg font-semibold text-black">
-              The Alliance Credit Company Ltd.
-            </p>
-            <p className="mt-0.5 text-xs text-black">
-              Week {weekInfo.week} · {weekRangeLabel}
-            </p>
-            <p className="text-xs text-black">{agentLabel}</p>
+        {printPages.map((page, pageIndex) => {
+          const isLastPage = pageIndex === printPages.length - 1;
+          return (
+            <div key={pageIndex} className={pageIndex > 0 ? "break-before-page" : ""}>
+              <div className="flex items-center gap-4 border-b-2 border-black pb-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-print.png"
+                  alt=""
+                  className="h-14 w-auto shrink-0"
+                />
+                <div>
+                  <p className="text-xl font-bold leading-tight text-black">
+                    The Alliance Credit Company Ltd.
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-black">
+                    Week {weekInfo.week} · {weekRangeLabel}
+                  </p>
+                  <p className="text-xs font-medium text-black">{agentLabel}</p>
+                </div>
+              </div>
 
-            <div className="mt-3 flex gap-6">
-              <div className="flex-1">
-                <PrintColumnTable rows={page.left} />
+              <div className="mt-4 flex gap-6">
+                <div className="flex-1">
+                  <PrintColumnTable rows={page.left} />
+                </div>
+                <div className="flex-1">
+                  <PrintColumnTable rows={page.right} />
+                </div>
               </div>
-              <div className="flex-1">
-                <PrintColumnTable rows={page.right} />
-              </div>
+
+              {isLastPage && (
+                <div className="mt-2 flex justify-end">
+                  <table className="border-collapse text-[11px] text-black">
+                    <tbody>
+                      <tr>
+                        <td className="w-[110px] border border-black bg-[#f0f0f0] px-2 py-1.5 font-bold">
+                          Total
+                        </td>
+                        <td className="w-[100px] border border-black px-2 py-1.5">
+                          &nbsp;
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
@@ -427,39 +457,47 @@ function PrintColumnTable({ rows }: { rows: CollectionLoan[] }) {
   return (
     <table className="w-full table-fixed border-collapse text-[11px] text-black">
       <colgroup>
-        <col className="w-[8%]" />
-        <col className="w-[32%]" />
-        <col className="w-[20%]" />
+        <col className="w-[7%]" />
+        <col className="w-[24%]" />
+        <col className="w-[29%]" />
         <col className="w-[18%]" />
         <col className="w-[22%]" />
       </colgroup>
       <thead>
         <tr>
-          <th className="border border-black px-1 py-1 text-left">#</th>
-          <th className="border border-black px-1 py-1 text-left">
+          <th className="border border-black bg-[#f0f0f0] px-1 py-1.5 text-left font-bold">
+            #
+          </th>
+          <th className="border border-black bg-[#f0f0f0] px-1 py-1.5 text-left font-bold">
             Customer Name
           </th>
-          <th className="border border-black px-1 py-1 text-left">
+          <th className="border border-black bg-[#f0f0f0] px-1 py-1.5 text-left font-bold">
+            Address
+          </th>
+          <th className="border border-black bg-[#f0f0f0] px-1 py-1.5 text-left font-bold">
             Amount Due
           </th>
-          <th className="border border-black px-1 py-1 text-left">Paid</th>
-          <th className="border border-black px-1 py-1 text-left">Notes</th>
+          <th className="border border-black bg-[#f0f0f0] px-1 py-1.5 text-left font-bold">
+            Paid
+          </th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row) => (
           <tr key={row.loanId}>
-            <td className="border border-black px-1 py-1 align-top">
+            <td className="border border-black px-1 py-1.5 align-top">
               {row.walkingOrder ?? "—"}
             </td>
-            <td className="border border-black px-1 py-1 align-top">
+            <td className="border border-black px-1 py-1.5 align-top">
               {row.customerName}
             </td>
-            <td className="border border-black px-1 py-1 align-top">
+            <td className="border border-black px-1 py-1.5 align-top">
+              {row.address ?? ""}
+            </td>
+            <td className="border border-black px-1 py-1.5 align-top">
               {formatCurrency(row.weeklyPayment)}
             </td>
-            <td className="border border-black px-1 py-1 align-top">&nbsp;</td>
-            <td className="border border-black px-1 py-1 align-top">&nbsp;</td>
+            <td className="border border-black px-1 py-1.5 align-top">&nbsp;</td>
           </tr>
         ))}
       </tbody>
