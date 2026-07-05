@@ -11,6 +11,7 @@ export type Customer = {
   eircode: string | null;
   phone: string | null;
   ppsn: string | null;
+  walking_order: number | null;
   id_photo_url: string | null;
   address_proof_url: string | null;
   income_proof_url: string | null;

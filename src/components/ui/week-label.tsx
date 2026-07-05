@@ -7,20 +7,22 @@ export function WeekLabel({
 }: {
   date: Date;
   dateLabel: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }) {
   const { week, year } = getWeekOfYear(date);
+
+  const titleSize =
+    size === "lg" ? "text-2xl" : size === "md" ? "text-base" : "text-sm";
+  const dateSize = size === "lg" ? "text-sm" : "text-xs";
 
   return (
     <div>
       <p
-        className={`font-bold leading-tight tracking-tight text-slate-900 ${
-          size === "md" ? "text-base" : "text-sm"
-        }`}
+        className={`font-bold leading-tight tracking-tight text-slate-900 ${titleSize}`}
       >
         Week {week} of {year}
       </p>
-      <p className="mt-0.5 text-xs leading-tight text-slate-400">
+      <p className={`mt-0.5 leading-tight text-slate-400 ${dateSize}`}>
         {dateLabel}
       </p>
     </div>

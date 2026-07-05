@@ -28,6 +28,8 @@ export function EditCustomerForm({
         eircode: values.eircode || null,
         phone: values.phone || null,
         ppsn: values.ppsn || null,
+        walking_order:
+          values.walking_order.trim() === "" ? null : Number(values.walking_order),
       })
       .eq("id", customerId)
       .eq("agent", activeAgent);

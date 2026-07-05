@@ -38,34 +38,54 @@ export default async function CollectionsPage() {
     customerIds.length > 0
       ? await supabase
           .from("customers")
-          .select("id, first_name, surname")
+          .select("id, first_name, surname, account_number, walking_order")
           .in("id", customerIds)
           .eq("agent", activeAgent)
       : { data: [] };
 
-  const customerNames = new Map<string, string>();
+  const customerInfo = new Map<
+    string,
+    { name: string; accountNumber: string; walkingOrder: number | null }
+  >();
   for (const c of (customersData ?? []) as Pick<
     Customer,
-    "id" | "first_name" | "surname"
+    "id" | "first_name" | "surname" | "account_number" | "walking_order"
   >[]) {
-    customerNames.set(c.id, `${c.first_name} ${c.surname}`);
+    customerInfo.set(c.id, {
+      name: `${c.first_name} ${c.surname}`,
+      accountNumber: c.account_number,
+      walkingOrder: c.walking_order,
+    });
   }
 
   const collectionLoans: CollectionLoan[] = loans
-    .map((l) => ({
-      loanId: l.id,
-      loanReference: l.loan_reference,
-      customerId: l.customer_id ?? "",
-      customerName: l.customer_id
-        ? (customerNames.get(l.customer_id) ?? "Unknown Customer")
-        : "Unknown Customer",
-      status: l.status ?? "active",
-      weeklyPayment: l.weekly_payment,
-      balance: l.balance,
-      arrears: l.arrears ?? 0,
-      totalRepayable: l.total_repayable,
-    }))
-    .sort((a, b) => a.customerName.localeCompare(b.customerName));
+    .map((l) => {
+      const info = l.customer_id ? customerInfo.get(l.customer_id) : undefined;
+      return {
+        loanId: l.id,
+        loanReference: l.loan_reference,
+        customerId: l.customer_id ?? "",
+        customerName: info?.name ?? "Unknown Customer",
+        accountNumber: info?.accountNumber ?? "",
+        walkingOrder: info?.walkingOrder ?? null,
+        status: l.status ?? "active",
+        weeklyPayment: l.weekly_payment,
+        balance: l.balance,
+        arrears: l.arrears ?? 0,
+        totalRepayable: l.total_repayable,
+      };
+    })
+    .sort((a, b) => {
+      if (a.walkingOrder != null && b.walkingOrder != null) {
+        return a.walkingOrder - b.walkingOrder;
+      }
+      if (a.walkingOrder != null) return -1;
+      if (b.walkingOrder != null) return 1;
+      return (
+        a.accountNumber.localeCompare(b.accountNumber) ||
+        a.customerName.localeCompare(b.customerName)
+      );
+    });
 
   const activeLoanIds = collectionLoans
     .filter((l) => l.status === "active")

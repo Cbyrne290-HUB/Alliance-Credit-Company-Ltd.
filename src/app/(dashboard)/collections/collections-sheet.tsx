@@ -5,6 +5,7 @@ import { Users, CheckCircle2, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/format";
 import { findNextPendingRow, savePaymentForRow } from "@/lib/loans";
+import { fromISODate, formatRangeLabel, getWeekOfYear } from "@/lib/dates";
 import { WeekPicker } from "@/components/ui/week-picker";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -179,8 +180,30 @@ export function CollectionsSheet({
     .filter((l) => l.status === "active")
     .reduce((sum, l) => sum + l.balance, 0);
 
+  const weekInfo = getWeekOfYear(fromISODate(week.start));
+  const weekRangeLabel = formatRangeLabel(
+    fromISODate(week.start),
+    fromISODate(week.end),
+  );
+  const agentLabel = `Agent ${activeAgent}`;
+  const printRows = allLoans.filter((l) => l.status === "active");
+
+  const PRINT_COLUMN_SIZE = 25;
+  const printPages: { left: CollectionLoan[]; right: CollectionLoan[] }[] = [];
+  for (let i = 0; i < printRows.length; i += PRINT_COLUMN_SIZE * 2) {
+    const chunk = printRows.slice(i, i + PRINT_COLUMN_SIZE * 2);
+    printPages.push({
+      left: chunk.slice(0, PRINT_COLUMN_SIZE),
+      right: chunk.slice(PRINT_COLUMN_SIZE),
+    });
+  }
+  if (printPages.length === 0) {
+    printPages.push({ left: [], right: [] });
+  }
+
   return (
     <>
+      <div className="print:hidden">
       <PageHeader
         title="Collections"
         breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Collections" }]}
@@ -208,8 +231,20 @@ export function CollectionsSheet({
           />
         </div>
 
-        <div className="mt-6">
-          <WeekPicker selectedWeek={week} onWeekChange={handleWeekChange} />
+        <div className="mt-6 flex items-center gap-4">
+          <WeekPicker
+            selectedWeek={week}
+            onWeekChange={handleWeekChange}
+            className="flex-1"
+            labelSize="lg"
+          />
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="shrink-0 rounded-md bg-[#2563eb] px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8]"
+          >
+            Print Sheet
+          </button>
         </div>
 
         <div className="mt-6 flex items-center gap-2">
@@ -360,6 +395,74 @@ export function CollectionsSheet({
         </div>
       </div>
       </div>
+      </div>
+
+      <div id="print-collection-sheet" className="hidden print:block">
+        {printPages.map((page, pageIndex) => (
+          <div key={pageIndex} className={pageIndex > 0 ? "break-before-page" : ""}>
+            <p className="text-lg font-semibold text-black">
+              The Alliance Credit Company Ltd.
+            </p>
+            <p className="mt-0.5 text-xs text-black">
+              Week {weekInfo.week} · {weekRangeLabel}
+            </p>
+            <p className="text-xs text-black">{agentLabel}</p>
+
+            <div className="mt-3 flex gap-6">
+              <div className="flex-1">
+                <PrintColumnTable rows={page.left} />
+              </div>
+              <div className="flex-1">
+                <PrintColumnTable rows={page.right} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </>
+  );
+}
+
+function PrintColumnTable({ rows }: { rows: CollectionLoan[] }) {
+  return (
+    <table className="w-full table-fixed border-collapse text-[11px] text-black">
+      <colgroup>
+        <col className="w-[8%]" />
+        <col className="w-[32%]" />
+        <col className="w-[20%]" />
+        <col className="w-[18%]" />
+        <col className="w-[22%]" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th className="border border-black px-1 py-1 text-left">#</th>
+          <th className="border border-black px-1 py-1 text-left">
+            Customer Name
+          </th>
+          <th className="border border-black px-1 py-1 text-left">
+            Amount Due
+          </th>
+          <th className="border border-black px-1 py-1 text-left">Paid</th>
+          <th className="border border-black px-1 py-1 text-left">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.loanId}>
+            <td className="border border-black px-1 py-1 align-top">
+              {row.walkingOrder ?? "—"}
+            </td>
+            <td className="border border-black px-1 py-1 align-top">
+              {row.customerName}
+            </td>
+            <td className="border border-black px-1 py-1 align-top">
+              {formatCurrency(row.weeklyPayment)}
+            </td>
+            <td className="border border-black px-1 py-1 align-top">&nbsp;</td>
+            <td className="border border-black px-1 py-1 align-top">&nbsp;</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

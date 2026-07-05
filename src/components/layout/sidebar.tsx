@@ -50,7 +50,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-80 shrink-0 flex-col bg-black">
+    <aside className="sticky top-0 flex h-screen w-80 shrink-0 flex-col bg-black print:hidden">
       <div className="flex items-center gap-2 px-6 py-6">
         {/* Inline style guarantees the exact brand gold, matching the logo,
             with no Tailwind opacity/tint utility able to dilute it. */}

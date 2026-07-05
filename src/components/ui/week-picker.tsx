@@ -27,9 +27,13 @@ function buildCalendarDays(visibleMonth: Date): Date[] {
 export function WeekPicker({
   selectedWeek,
   onWeekChange,
+  className = "",
+  labelSize = "md",
 }: {
   selectedWeek: WeekRange;
   onWeekChange: (week: WeekRange) => void;
+  className?: string;
+  labelSize?: "sm" | "md" | "lg";
 }) {
   const today = useMemo(() => new Date(), []);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -59,9 +63,13 @@ export function WeekPicker({
   });
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <WeekLabel date={weekStart} dateLabel={formatRangeLabel(weekStart, weekEnd)} />
+        <WeekLabel
+          date={weekStart}
+          dateLabel={formatRangeLabel(weekStart, weekEnd)}
+          size={labelSize}
+        />
 
         <div className="flex flex-wrap items-center gap-2">
           <button

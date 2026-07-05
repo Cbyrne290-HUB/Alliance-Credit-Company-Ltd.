@@ -36,6 +36,8 @@ export default async function EditCustomerPage({
     eircode: customer.eircode ?? "",
     phone: customer.phone ?? "",
     ppsn: customer.ppsn ?? "",
+    walking_order:
+      customer.walking_order != null ? String(customer.walking_order) : "",
   };
 
   return (

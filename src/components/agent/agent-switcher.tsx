@@ -10,7 +10,7 @@ export function AgentSwitcher() {
   if (!canSwitch) return null;
 
   return (
-    <div className="flex items-center gap-2.5 border-b border-amber-200 bg-amber-50 px-8 py-2">
+    <div className="flex items-center gap-2.5 border-b border-amber-200 bg-amber-50 px-8 py-2 print:hidden">
       <span className="text-xs font-medium uppercase tracking-wide text-amber-700">
         Viewing
       </span>

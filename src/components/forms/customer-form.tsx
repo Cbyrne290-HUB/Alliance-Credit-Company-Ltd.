@@ -11,6 +11,7 @@ export type CustomerFormValues = {
   eircode: string;
   phone: string;
   ppsn: string;
+  walking_order: string;
 };
 
 const EMPTY_VALUES: CustomerFormValues = {
@@ -22,6 +23,7 @@ const EMPTY_VALUES: CustomerFormValues = {
   eircode: "",
   phone: "",
   ppsn: "",
+  walking_order: "",
 };
 
 export function CustomerForm({
@@ -93,6 +95,12 @@ export function CustomerForm({
           label="PPSN"
           value={form.ppsn}
           onChange={(v) => update("ppsn", v)}
+        />
+        <Field
+          label="Walking Order"
+          type="number"
+          value={form.walking_order}
+          onChange={(v) => update("walking_order", v)}
         />
       </div>
 
