@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
 import {
   LayoutDashboard,
   Wallet,
@@ -13,6 +14,8 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+import { useAgentContext } from "@/components/agent/agent-provider";
+import { signOutAction } from "@/lib/auth-actions";
 
 const NAV_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -34,6 +37,17 @@ function isActive(href: string, pathname: string | null) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { role } = useAgentContext();
+  const [isSigningOut, startTransition] = useTransition();
+
+  function handleSignOut() {
+    startTransition(async () => {
+      await signOutAction();
+      router.push("/login");
+      router.refresh();
+    });
+  }
 
   return (
     <aside className="sticky top-0 flex h-screen w-80 shrink-0 flex-col bg-black">
@@ -76,6 +90,21 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="px-3 pb-6 pt-2">
+        <p className="mb-2 px-1 text-xs text-slate-500">
+          Logged in as {role === "agent_b" ? "Agent B" : "Agent A"}
+        </p>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="w-full rounded-lg px-3 py-2.5 text-sm font-medium text-black transition-colors hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+          style={{ backgroundColor: "#c4a95b" }}
+        >
+          {isSigningOut ? "Signing out..." : "Sign Out"}
+        </button>
+      </div>
     </aside>
   );
 }
