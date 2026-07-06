@@ -1,10 +1,16 @@
-export default function Home() {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center">
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Alliance Admin
-      </h1>
-      <p className="mt-2 text-sm text-zinc-500">Base project ready.</p>
-    </div>
-  );
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+
+/**
+ * The middleware already redirects "/" to /login or /dashboard before this
+ * ever renders — this is just a defensive fallback for the same logic in
+ * case middleware is ever bypassed, not the primary routing path.
+ */
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  redirect(user ? "/dashboard" : "/login");
 }
