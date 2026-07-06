@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { round2 } from "@/lib/loans";
+import { fetchAllRows } from "@/lib/fetch-all";
 import type { ActiveAgent } from "@/types/agent";
 
 export const RECONCILIATIONS_TABLE = "reconciliations";
@@ -17,14 +18,16 @@ export async function computeClosingBalance(
   weekStart: string,
   weekEnd: string,
 ): Promise<number> {
-  const { data } = await supabase
-    .from("payments")
-    .select("amount_paid")
-    .eq("agent", activeAgent)
-    .gte("payment_date", weekStart)
-    .lte("payment_date", weekEnd);
+  const rows = await fetchAllRows<{ amount_paid: number | null }>((from, to) =>
+    supabase
+      .from("payments")
+      .select("amount_paid", { count: "exact" })
+      .eq("agent", activeAgent)
+      .gte("payment_date", weekStart)
+      .lte("payment_date", weekEnd)
+      .range(from, to),
+  );
 
-  const rows = (data ?? []) as { amount_paid: number | null }[];
   return round2(rows.reduce((sum, r) => sum + (r.amount_paid ?? 0), 0));
 }
 

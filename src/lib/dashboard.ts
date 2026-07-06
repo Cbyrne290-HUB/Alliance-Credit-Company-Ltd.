@@ -1,13 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { round2 } from "@/lib/loans";
+import { fetchAllRows } from "@/lib/fetch-all";
 import type { ActiveAgent } from "@/types/agent";
-import {
-  addMonths,
-  endOfMonth,
-  fromISODate,
-  isWithinRange,
-  startOfMonth,
-} from "@/lib/dates";
+import { fromISODate } from "@/lib/dates";
 
 export type DashboardMetrics = {
   totalCollected: number;
@@ -67,27 +62,31 @@ export async function fetchDashboardData(
   statusBreakdown: StatusBreakdown;
   agingBuckets: AgingBucket[];
 }> {
-  const [{ data: paymentsData }, { data: loansData }] = await Promise.all([
-    supabase
-      .from("payments")
-      .select("amount_paid")
-      .eq("agent", activeAgent)
-      .gte("payment_date", range.start)
-      .lte("payment_date", range.end),
-    supabase
-      .from("loans")
-      .select("id, loan_reference, customer_id, status, balance, arrears, weekly_payment")
-      .eq("agent", activeAgent),
+  const [paymentsData, allLoans] = await Promise.all([
+    fetchAllRows<{ amount_paid: number | null }>((from, to) =>
+      supabase
+        .from("payments")
+        .select("amount_paid", { count: "exact" })
+        .eq("agent", activeAgent)
+        .gte("payment_date", range.start)
+        .lte("payment_date", range.end)
+        .range(from, to),
+    ),
+    fetchAllRows<LoanRow>((from, to) =>
+      supabase
+        .from("loans")
+        .select("id, loan_reference, customer_id, status, balance, arrears, weekly_payment", {
+          count: "exact",
+        })
+        .eq("agent", activeAgent)
+        .range(from, to),
+    ),
   ]);
 
   const totalCollected = round2(
-    ((paymentsData ?? []) as { amount_paid: number | null }[]).reduce(
-      (sum, p) => sum + (p.amount_paid ?? 0),
-      0,
-    ),
+    paymentsData.reduce((sum, p) => sum + (p.amount_paid ?? 0), 0),
   );
 
-  const allLoans = (loansData ?? []) as LoanRow[];
   const activeLoans = allLoans.filter((l) => l.status === "active");
   const clearedLoans = allLoans.filter((l) => l.status === "cleared");
   const arrearsLoans = activeLoans.filter((l) => (l.arrears ?? 0) > 0);
@@ -96,27 +95,21 @@ export async function fetchDashboardData(
     activeLoans.reduce((sum, l) => sum + l.balance, 0),
   );
 
-  const customerIds = Array.from(
-    new Set(
-      arrearsLoans
-        .map((l) => l.customer_id)
-        .filter((id): id is string => Boolean(id)),
-    ),
+  // Fetched directly by agent rather than via .in() on the arrears loans'
+  // customer_id list — that list can run into the hundreds/thousands, and
+  // an IN(...) clause that large gets rejected outright (400) well before
+  // it'd ever hit a realistic URL-length limit.
+  const customers = await fetchAllRows<CustomerNameRow>((from, to) =>
+    supabase
+      .from("customers")
+      .select("id, first_name, surname", { count: "exact" })
+      .eq("agent", activeAgent)
+      .range(from, to),
   );
 
-  const customerNames = new Map<string, string>();
-
-  if (customerIds.length > 0) {
-    const { data: customersData } = await supabase
-      .from("customers")
-      .select("id, first_name, surname")
-      .in("id", customerIds)
-      .eq("agent", activeAgent);
-
-    for (const c of (customersData ?? []) as CustomerNameRow[]) {
-      customerNames.set(c.id, `${c.first_name} ${c.surname}`);
-    }
-  }
+  const customerNames = new Map(
+    customers.map((c) => [c.id, `${c.first_name} ${c.surname}`]),
+  );
 
   const arrears: ArrearsRow[] = arrearsLoans
     .map((l) => ({
@@ -169,85 +162,40 @@ function computeAgingBuckets(arrears: ArrearsRow[]): AgingBucket[] {
 }
 
 /**
- * Reconstructs a monthly Total Collected / Total Out on Loan trend from the
- * loans and payments tables (there's no historical balance snapshot table,
- * so "out on loan as of month end" is derived from each loan's total
- * repayable minus everything paid on it by that point).
+ * Reconstructs a monthly Total Collected / Total Out on Loan trend. This
+ * used to pull every loan and every payment for the agent (tens of
+ * thousands of rows once the book is a few hundred customers deep) just to
+ * sum them into 6 numbers in JS — now delegated to a Postgres function
+ * (see loan_overview_history in the RLS/scaling SQL) that computes the same
+ * sums with SQL aggregates and returns just `monthsCount` rows. The function
+ * runs as SECURITY INVOKER, so it's still subject to the same agent_is_visible
+ * RLS policy as a direct table query — passing a foreign agent value can't
+ * leak rows the caller isn't otherwise allowed to see.
  */
 export async function fetchLoanOverviewHistory(
   supabase: SupabaseClient,
   activeAgent: ActiveAgent,
   monthsCount = 6,
 ): Promise<MonthlyHistoryPoint[]> {
-  type LoanHistoryRow = {
-    id: string;
-    total_repayable: number;
-    created_at: string | null;
-  };
-  type PaymentHistoryRow = {
-    loan_id: string | null;
-    amount_paid: number | null;
-    payment_date: string | null;
-  };
-
-  const [{ data: loansData }, { data: paymentsData }] = await Promise.all([
-    supabase
-      .from("loans")
-      .select("id, total_repayable, created_at")
-      .eq("agent", activeAgent),
-    supabase
-      .from("payments")
-      .select("loan_id, amount_paid, payment_date")
-      .eq("agent", activeAgent),
-  ]);
-
-  const loans = (loansData ?? []) as LoanHistoryRow[];
-  const payments = (paymentsData ?? []) as PaymentHistoryRow[];
-
-  const today = new Date();
-  const months = Array.from({ length: monthsCount }, (_, i) => {
-    const monthDate = addMonths(startOfMonth(today), -(monthsCount - 1 - i));
-    const end = endOfMonth(monthDate);
-    end.setHours(23, 59, 59, 999);
-    return {
-      start: startOfMonth(monthDate),
-      end,
-      label: monthDate.toLocaleDateString("en-IE", {
-        month: "short",
-        year: "numeric",
-      }),
-    };
+  const { data, error } = await supabase.rpc("loan_overview_history", {
+    p_agent: activeAgent,
+    p_months: monthsCount,
   });
 
-  return months.map(({ start, end, label }) => {
-    const totalCollected = round2(
-      payments
-        .filter(
-          (p) =>
-            p.payment_date &&
-            isWithinRange(fromISODate(p.payment_date), start, end),
-        )
-        .reduce((sum, p) => sum + (p.amount_paid ?? 0), 0),
-    );
+  if (error) throw new Error(error.message);
 
-    const totalOutOnLoan = round2(
-      loans.reduce((sum, l) => {
-        if (!l.created_at) return sum;
-        if (new Date(l.created_at).getTime() > end.getTime()) return sum;
-
-        const paidToDate = payments
-          .filter(
-            (p) =>
-              p.loan_id === l.id &&
-              p.payment_date &&
-              fromISODate(p.payment_date).getTime() <= end.getTime(),
-          )
-          .reduce((s, p) => s + (p.amount_paid ?? 0), 0);
-
-        return sum + Math.max(0, l.total_repayable - paidToDate);
-      }, 0),
-    );
-
-    return { month: label, totalCollected, totalOutOnLoan };
-  });
+  return (
+    (data ?? []) as {
+      month_start: string;
+      total_collected: number | string;
+      total_out_on_loan: number | string;
+    }[]
+  ).map((row) => ({
+    month: fromISODate(row.month_start).toLocaleDateString("en-IE", {
+      month: "short",
+      year: "numeric",
+    }),
+    totalCollected: round2(Number(row.total_collected)),
+    totalOutOnLoan: round2(Number(row.total_out_on_loan)),
+  }));
 }

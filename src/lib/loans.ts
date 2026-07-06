@@ -127,6 +127,32 @@ export function computeLedger(
   };
 }
 
+/**
+ * Loads one loan's full payment history, ordered for computeLedger. Bounded
+ * to a single loan's schedule (term_weeks rows, never more than a few
+ * dozen), so no pagination is needed here the way it is for agent-wide
+ * queries. Used to fetch the ledger inputs on demand right before a save,
+ * rather than preloading every loan's full history up front.
+ */
+export async function fetchPaymentsForLoan(
+  supabase: SupabaseClient,
+  loanId: string,
+  activeAgent: ActiveAgent,
+): Promise<Payment[]> {
+  const { data, error } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("loan_id", loanId)
+    .eq("agent", activeAgent)
+    .order("week_number", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as Payment[];
+}
+
 export type SavePaymentResult =
   | {
       ok: true;

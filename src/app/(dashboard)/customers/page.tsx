@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAgentContext } from "@/lib/agent-context";
+import { fetchAllRows } from "@/lib/fetch-all";
 import { CustomerSearch } from "./customer-search";
 import type { CustomerDirectoryRow, CustomerListItem } from "@/types/customer";
 
@@ -7,21 +8,27 @@ export default async function CustomersPage() {
   const supabase = await createClient();
   const { activeAgent } = await getAgentContext();
 
-  const [{ data: customersData }, { data: loansData }] = await Promise.all([
-    supabase
-      .from("customers")
-      .select("id, account_number, first_name, surname, phone, ppsn")
-      .eq("agent", activeAgent)
-      .order("created_at", { ascending: false }),
-    supabase.from("loans").select("customer_id, status, arrears").eq("agent", activeAgent),
+  const [customers, loans] = await Promise.all([
+    fetchAllRows<CustomerListItem>((from, to) =>
+      supabase
+        .from("customers")
+        .select("id, account_number, first_name, surname, phone, ppsn", { count: "exact" })
+        .eq("agent", activeAgent)
+        .order("created_at", { ascending: false })
+        .range(from, to),
+    ),
+    fetchAllRows<{
+      customer_id: string | null;
+      status: string | null;
+      arrears: number | null;
+    }>((from, to) =>
+      supabase
+        .from("loans")
+        .select("customer_id, status, arrears", { count: "exact" })
+        .eq("agent", activeAgent)
+        .range(from, to),
+    ),
   ]);
-
-  const customers = (customersData ?? []) as CustomerListItem[];
-  const loans = (loansData ?? []) as {
-    customer_id: string | null;
-    status: string | null;
-    arrears: number | null;
-  }[];
 
   const loansByCustomer = new Map<string, typeof loans>();
   for (const loan of loans) {

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:test-data": "tsx scripts/seed-test-data.ts",
+    "cleanup:test-data": "tsx scripts/cleanup-test-data.ts",
+    "wipe:all-data": "tsx scripts/wipe-all-data.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -25,9 +28,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "^15.5.20",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^5"
   }
 }

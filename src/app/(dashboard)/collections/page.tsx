@@ -1,47 +1,55 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAgentContext } from "@/lib/agent-context";
 import { getMonday, getSunday, toISODate } from "@/lib/dates";
-import type { Loan, Payment } from "@/types/loan";
+import { fetchAllRows } from "@/lib/fetch-all";
+import type { Loan } from "@/types/loan";
 import type { Customer } from "@/types/customer";
-import type { CollectionLoan } from "@/types/collections";
+import type { CollectionLoan, NextPendingPayment } from "@/types/collections";
 import { CollectionsSheet } from "./collections-sheet";
 
 export default async function CollectionsPage() {
   const supabase = await createClient();
   const { activeAgent } = await getAgentContext();
 
-  const { data: loansData } = await supabase
-    .from("loans")
-    .select(
-      "id, loan_reference, customer_id, status, weekly_payment, balance, arrears, total_repayable",
-    )
-    .eq("agent", activeAgent)
-    .order("created_at", { ascending: true });
-
-  const loans = (loansData ?? []) as Pick<
-    Loan,
-    | "id"
-    | "loan_reference"
-    | "customer_id"
-    | "status"
-    | "weekly_payment"
-    | "balance"
-    | "arrears"
-    | "total_repayable"
-  >[];
-
-  const customerIds = Array.from(
-    new Set(loans.map((l) => l.customer_id).filter((id): id is string => Boolean(id))),
+  const loans = await fetchAllRows<
+    Pick<
+      Loan,
+      | "id"
+      | "loan_reference"
+      | "customer_id"
+      | "status"
+      | "weekly_payment"
+      | "balance"
+      | "arrears"
+      | "total_repayable"
+    >
+  >((from, to) =>
+    supabase
+      .from("loans")
+      .select(
+        "id, loan_reference, customer_id, status, weekly_payment, balance, arrears, total_repayable",
+        { count: "exact" },
+      )
+      .eq("agent", activeAgent)
+      .order("created_at", { ascending: true })
+      .range(from, to),
   );
 
-  const { data: customersData } =
-    customerIds.length > 0
-      ? await supabase
-          .from("customers")
-          .select("id, first_name, surname, account_number, address, walking_order")
-          .in("id", customerIds)
-          .eq("agent", activeAgent)
-      : { data: [] };
+  // Fetched directly by agent (not via .in() on the loans' customer_id
+  // list) — an agent-scoped list can run into the thousands, and a query
+  // string with that many UUIDs in an IN(...) clause gets rejected outright
+  // (400) well before it'd ever hit a realistic URL-length limit.
+  const customers = await fetchAllRows<
+    Pick<Customer, "id" | "first_name" | "surname" | "account_number" | "address" | "walking_order">
+  >((from, to) =>
+    supabase
+      .from("customers")
+      .select("id, first_name, surname, account_number, address, walking_order", {
+        count: "exact",
+      })
+      .eq("agent", activeAgent)
+      .range(from, to),
+  );
 
   const customerInfo = new Map<
     string,
@@ -52,10 +60,7 @@ export default async function CollectionsPage() {
       walkingOrder: number | null;
     }
   >();
-  for (const c of (customersData ?? []) as Pick<
-    Customer,
-    "id" | "first_name" | "surname" | "account_number" | "address" | "walking_order"
-  >[]) {
+  for (const c of customers) {
     customerInfo.set(c.id, {
       name: `${c.first_name} ${c.surname}`,
       accountNumber: c.account_number,
@@ -94,26 +99,32 @@ export default async function CollectionsPage() {
       );
     });
 
-  const activeLoanIds = collectionLoans
-    .filter((l) => l.status === "active")
-    .map((l) => l.loanId);
+  // Sourced from the next_pending_payments SQL view (one row per loan —
+  // its next unpaid week — not the loan's full history), so this is
+  // roughly the size of the active-loan count, not every payment ever
+  // recorded. The view still enforces the same agent_is_visible RLS policy
+  // as the payments table directly (created with security_invoker so RLS
+  // is evaluated as the calling user, not the view owner).
+  const nextPendingRows = await fetchAllRows<{
+    id: string;
+    loan_id: string;
+    week_number: number;
+    amount_due: number;
+  }>((from, to) =>
+    supabase
+      .from("next_pending_payments")
+      .select("id, loan_id, week_number, amount_due", { count: "exact" })
+      .eq("agent", activeAgent)
+      .range(from, to),
+  );
 
-  const { data: paymentsData } =
-    activeLoanIds.length > 0
-      ? await supabase
-          .from("payments")
-          .select("*")
-          .in("loan_id", activeLoanIds)
-          .eq("agent", activeAgent)
-          .order("week_number", { ascending: true })
-      : { data: [] };
-
-  const payments = (paymentsData ?? []) as Payment[];
-
-  const paymentsByLoan: Record<string, Payment[]> = {};
-  for (const p of payments) {
-    if (!p.loan_id) continue;
-    (paymentsByLoan[p.loan_id] ??= []).push(p);
+  const nextPendingByLoan: Record<string, NextPendingPayment> = {};
+  for (const row of nextPendingRows) {
+    nextPendingByLoan[row.loan_id] = {
+      id: row.id,
+      weekNumber: row.week_number,
+      amountDue: row.amount_due,
+    };
   }
 
   const today = new Date();
@@ -126,7 +137,7 @@ export default async function CollectionsPage() {
     <CollectionsSheet
       key={activeAgent}
       loans={collectionLoans}
-      paymentsByLoan={paymentsByLoan}
+      nextPendingByLoan={nextPendingByLoan}
       initialWeek={initialWeek}
     />
   );

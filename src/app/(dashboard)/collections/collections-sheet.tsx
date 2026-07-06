@@ -1,18 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Users, CheckCircle2, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/format";
-import { findNextPendingRow, savePaymentForRow } from "@/lib/loans";
+import { fetchPaymentsForLoan, findNextPendingRow, savePaymentForRow } from "@/lib/loans";
 import { fromISODate, formatRangeLabel, getWeekOfYear } from "@/lib/dates";
 import { WeekPicker } from "@/components/ui/week-picker";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { Avatar } from "@/components/ui/avatar";
 import { useAgentContext } from "@/components/agent/agent-provider";
-import type { Payment } from "@/types/loan";
-import type { CollectionLoan } from "@/types/collections";
+import type { CollectionLoan, NextPendingPayment } from "@/types/collections";
 
 type WeekRange = { start: string; end: string };
 type Filter = "ongoing" | "cleared" | "all";
@@ -25,11 +24,11 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 export function CollectionsSheet({
   loans,
-  paymentsByLoan,
+  nextPendingByLoan: initialNextPendingByLoan,
   initialWeek,
 }: {
   loans: CollectionLoan[];
-  paymentsByLoan: Record<string, Payment[]>;
+  nextPendingByLoan: Record<string, NextPendingPayment>;
   initialWeek: WeekRange;
 }) {
   const [week, setWeek] = useState<WeekRange>(initialWeek);
@@ -37,8 +36,13 @@ export function CollectionsSheet({
   const [loansState, setLoansState] = useState<Record<string, CollectionLoan>>(
     () => Object.fromEntries(loans.map((l) => [l.loanId, l])),
   );
-  const [paymentsState, setPaymentsState] =
-    useState<Record<string, Payment[]>>(paymentsByLoan);
+  // Just the next unpaid week per active loan (from the next_pending_payments
+  // view) — not each loan's full payment history. A loan's complete history
+  // is only fetched on demand, right at the moment a save happens (see
+  // performSave), rather than preloaded for every loan up front.
+  const [nextPendingByLoan, setNextPendingByLoan] = useState<
+    Record<string, NextPendingPayment>
+  >(initialNextPendingByLoan);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingLoanId, setSavingLoanId] = useState<string | null>(null);
   const [isSavingAll, setIsSavingAll] = useState(false);
@@ -46,18 +50,6 @@ export function CollectionsSheet({
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const { activeAgent } = useAgentContext();
-
-  // The row each active loan would record a payment against — always its
-  // next unpaid week, same as the Loan Ledger. The selected week only
-  // controls what payment_date gets stamped, not which row is targeted.
-  const nextRowByLoan = useMemo(() => {
-    const map: Record<string, Payment | null> = {};
-    for (const loan of Object.values(loansState)) {
-      if (loan.status !== "active") continue;
-      map[loan.loanId] = findNextPendingRow(paymentsState[loan.loanId] ?? []);
-    }
-    return map;
-  }, [loansState, paymentsState]);
 
   function handleWeekChange(next: WeekRange) {
     setWeek(next);
@@ -67,13 +59,13 @@ export function CollectionsSheet({
 
   async function performSave(loanId: string): Promise<{ ok: boolean }> {
     const loan = loansState[loanId];
-    const row = nextRowByLoan[loanId];
+    const nextPending = loan?.status === "active" ? nextPendingByLoan[loanId] : undefined;
 
-    if (!loan || !row) {
+    if (!loan || !nextPending) {
       return { ok: true };
     }
 
-    const draftValue = drafts[loanId] ?? String(row.amount_due);
+    const draftValue = drafts[loanId] ?? String(nextPending.amountDue);
     const trimmed = draftValue.trim();
     const amount = Number(trimmed);
 
@@ -90,6 +82,23 @@ export function CollectionsSheet({
     });
 
     const supabase = createClient();
+
+    // Fetched fresh right here rather than kept preloaded for every loan —
+    // computeLedger (inside savePaymentForRow) still gets the exact same
+    // complete, week_number-ordered history for this loan it always did, so
+    // the balance/arrears/cleared recomputation is byte-for-byte identical
+    // to before; only the timing of the fetch changed.
+    let existingPayments;
+    try {
+      existingPayments = await fetchPaymentsForLoan(supabase, loanId, activeAgent);
+    } catch (err) {
+      setRowErrors((prev) => ({
+        ...prev,
+        [loanId]: err instanceof Error ? err.message : "Could not load payment history.",
+      }));
+      return { ok: false };
+    }
+
     const result = await savePaymentForRow(
       supabase,
       {
@@ -97,8 +106,8 @@ export function CollectionsSheet({
         total_repayable: loan.totalRepayable,
         weekly_payment: loan.weeklyPayment,
       },
-      paymentsState[loanId] ?? [],
-      row.id,
+      existingPayments,
+      nextPending.id,
       amount,
       week.start,
       activeAgent,
@@ -109,10 +118,20 @@ export function CollectionsSheet({
       return { ok: false };
     }
 
-    setPaymentsState((prev) => ({
-      ...prev,
-      [loanId]: result.rows,
-    }));
+    const newNextRow = findNextPendingRow(result.rows);
+    setNextPendingByLoan((prev) => {
+      const next = { ...prev };
+      if (newNextRow) {
+        next[loanId] = {
+          id: newNextRow.id,
+          weekNumber: newNextRow.week_number,
+          amountDue: newNextRow.amount_due,
+        };
+      } else {
+        delete next[loanId];
+      }
+      return next;
+    });
     setLoansState((prev) => ({
       ...prev,
       [loanId]: {
@@ -146,7 +165,7 @@ export function CollectionsSheet({
     setBulkError(null);
 
     const eligibleLoanIds = filteredLoans
-      .filter((l) => Boolean(nextRowByLoan[l.loanId]))
+      .filter((l) => l.status === "active" && Boolean(nextPendingByLoan[l.loanId]))
       .map((l) => l.loanId);
 
     const results = await Promise.all(eligibleLoanIds.map((id) => performSave(id)));
@@ -287,11 +306,11 @@ export function CollectionsSheet({
 
                 {filteredLoans.map((loan) => {
                   const isActive = loan.status === "active";
-                  const row = nextRowByLoan[loan.loanId];
-                  const editable = isActive && Boolean(row);
+                  const nextPending = isActive ? nextPendingByLoan[loan.loanId] : undefined;
+                  const editable = Boolean(nextPending);
                   const value =
-                    editable && row
-                      ? (drafts[loan.loanId] ?? String(row.amount_due))
+                    editable && nextPending
+                      ? (drafts[loan.loanId] ?? String(nextPending.amountDue))
                       : "";
                   const error = rowErrors[loan.loanId];
 
