@@ -9,6 +9,7 @@ import {
   Wallet,
   Scale,
   Users,
+  ClipboardList,
   FileBarChart,
   UserCog,
   Settings,
@@ -19,6 +20,7 @@ import { signOutAction } from "@/lib/auth-actions";
 
 const NAV_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/applications", label: "Applications", icon: ClipboardList },
   { href: "/collections", label: "Collections", icon: Wallet },
   { href: "/balancing", label: "Balancing", icon: Scale },
   { href: "/customers", label: "Customers", icon: Users },
