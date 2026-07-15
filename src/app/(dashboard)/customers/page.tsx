@@ -12,7 +12,7 @@ export default async function CustomersPage() {
     fetchAllRows<CustomerListItem>((from, to) =>
       supabase
         .from("customers")
-        .select("id, account_number, first_name, surname, phone, ppsn", { count: "exact" })
+        .select("id, account_number, first_name, surname, phone", { count: "exact" })
         .eq("agent", activeAgent)
         .order("created_at", { ascending: false })
         .range(from, to),

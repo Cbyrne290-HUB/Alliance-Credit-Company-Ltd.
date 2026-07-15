@@ -10,15 +10,6 @@
 
 -- ------------------------------------------------------------
 -- public.applications
---
--- NOTE: if the public application website inserts rows using the
--- Supabase anon key (rather than a server-side service role key),
--- confirm it already has its own INSERT policy for the `anon` role on
--- this table — enabling RLS here does not add one, and if the table
--- currently relies on RLS being OFF for that insert to work, turning
--- RLS on below will silently break new applications from the public
--- site. Add an anon insert policy for `applications` (and the
--- `application-documents` bucket) if one doesn't already exist.
 -- ------------------------------------------------------------
 alter table public.applications enable row level security;
 
@@ -26,6 +17,27 @@ drop policy if exists "applications_authenticated_access" on public.applications
 create policy "applications_authenticated_access" on public.applications
   for all to authenticated
   using (true)
+  with check (true);
+
+-- ------------------------------------------------------------
+-- anon insert — public application website
+--
+-- The public application website (a separate project, not this admin
+-- repo) submits new applications directly with the Supabase anon key.
+-- This policy is what makes that insert legal under RLS; it is
+-- documented here as source of truth so this repo doesn't drift from
+-- what's actually live in Supabase, but it is owned/created by the
+-- apply website's own setup, not by this admin app.
+--
+-- INSERT-only, `with check (true)` so any submitted row is accepted —
+-- deliberately no `using` clause and no other command, so the anon
+-- role gets no select/update/delete on this table at all: the public
+-- site can create an application but can never read back, modify, or
+-- remove any application (its own or anyone else's) once submitted.
+-- ------------------------------------------------------------
+drop policy if exists "applications_anon_insert" on public.applications;
+create policy "applications_anon_insert" on public.applications
+  for insert to anon
   with check (true);
 
 -- ------------------------------------------------------------

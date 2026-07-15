@@ -115,7 +115,6 @@ export function CustomerSearch({
                   <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                     <th className="px-4 py-3">Customer</th>
                     <th className="px-4 py-3">Phone</th>
-                    <th className="px-4 py-3">ID/PPSN</th>
                     <th className="px-4 py-3">Loans</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3" />
@@ -155,9 +154,6 @@ export function CustomerSearch({
                         </td>
                         <td className="px-4 py-3 text-slate-600">
                           {c.phone ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {c.ppsn ?? "—"}
                         </td>
                         <td className="px-4 py-3 text-slate-600">
                           {c.loanCount}

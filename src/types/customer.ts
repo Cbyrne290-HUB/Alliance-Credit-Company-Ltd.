@@ -21,7 +21,7 @@ export type Customer = {
 
 export type CustomerListItem = Pick<
   Customer,
-  "id" | "account_number" | "first_name" | "surname" | "phone" | "ppsn"
+  "id" | "account_number" | "first_name" | "surname" | "phone"
 >;
 
 export type CustomerDirectoryRow = CustomerListItem & {
