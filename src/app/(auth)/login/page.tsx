@@ -3,12 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { signInAction } from "@/lib/auth-actions";
-
-function formatLockMessage(secondsRemaining: number): string {
-  const minutes = Math.max(1, Math.ceil(secondsRemaining / 60));
-  return `Too many failed attempts. Please try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`;
-}
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,10 +17,16 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const result = await signInAction(username, password);
+    const email = `${username.trim().toLowerCase()}@alliance.local`;
 
-    if (!result.ok) {
-      setError(result.locked ? formatLockMessage(result.secondsRemaining) : result.error);
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError("Invalid email or password. Please try again.");
       setLoading(false);
       return;
     }
