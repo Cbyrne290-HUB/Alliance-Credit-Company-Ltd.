@@ -27,6 +27,7 @@ const securityHeaders = [
       "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
   },
   { key: "X-DNS-Prefetch-Control", value: "on" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
 ];
 
 const nextConfig: NextConfig = {

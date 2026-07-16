@@ -21,6 +21,16 @@ const pinyonScript = Pinyon_Script({
 export const metadata: Metadata = {
   title: "Alliance Admin",
   description: "Loan management admin platform",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
 };
 
 export default function RootLayout({
