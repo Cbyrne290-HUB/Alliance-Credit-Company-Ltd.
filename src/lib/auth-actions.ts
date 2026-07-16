@@ -37,6 +37,57 @@ function secondsUntil(iso: string | null): number {
 }
 
 /**
+ * Both rate-limit calls are wrapped so a failure (missing service-role
+ * key, transient network error, RPC error) is always logged — never
+ * silently discarded — while still failing open to the normal sign-in.
+ * A previous version of record_login_attempt's call site didn't check
+ * its `error` at all, which meant a failing write left zero trace
+ * anywhere and the lockout counter silently never advanced.
+ */
+async function checkLockout(identifier: string): Promise<LockoutState | null> {
+  try {
+    const { data, error } = await getLoginRateLimitClient()
+      .rpc("check_login_lockout", { p_identifier: identifier })
+      .single();
+
+    if (error) {
+      console.error("[login-rate-limit] check_login_lockout failed:", error.message);
+      return null;
+    }
+    return data as LockoutState;
+  } catch (err) {
+    console.error(
+      "[login-rate-limit] could not reach rate limiter for lockout check:",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
+async function recordAttempt(
+  identifier: string,
+  success: boolean,
+): Promise<AttemptState | null> {
+  try {
+    const { data, error } = await getLoginRateLimitClient()
+      .rpc("record_login_attempt", { p_identifier: identifier, p_success: success })
+      .single();
+
+    if (error) {
+      console.error("[login-rate-limit] record_login_attempt failed:", error.message);
+      return null;
+    }
+    return data as AttemptState;
+  } catch (err) {
+    console.error(
+      "[login-rate-limit] could not reach rate limiter to record attempt:",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
+/**
  * Runs the whole check -> sign-in -> record sequence in one atomic
  * server call, so a client can never split it apart or skip the
  * recording step the way it could if the browser called Supabase Auth
@@ -48,35 +99,27 @@ function secondsUntil(iso: string | null): number {
  * If the rate-limit check itself errors (e.g. misconfiguration), this
  * fails open to the normal sign-in rather than locking every admin out
  * of the app — availability over defense-in-depth for a control that
- * already has Supabase's own IP rate limiting behind it.
+ * already has Supabase's own IP rate limiting behind it. The failure is
+ * still always logged (see checkLockout/recordAttempt above) so an
+ * outage of the rate limiter itself is never silent.
  */
 export async function signInAction(
   username: string,
   password: string,
 ): Promise<SignInResult> {
   const email = `${username.trim().toLowerCase()}@${LOGIN_EMAIL_DOMAIN}`;
-  const rateLimiter = getLoginRateLimitClient();
 
-  const { data: lockData, error: lockError } = await rateLimiter
-    .rpc("check_login_lockout", { p_identifier: email })
-    .single();
-
-  if (!lockError) {
-    const lock = lockData as LockoutState;
-    if (lock.locked) {
-      return { ok: false, locked: true, secondsRemaining: secondsUntil(lock.locked_until) };
-    }
+  const lock = await checkLockout(email);
+  if (lock?.locked) {
+    return { ok: false, locked: true, secondsRemaining: secondsUntil(lock.locked_until) };
   }
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-  const { data: recordData } = await rateLimiter
-    .rpc("record_login_attempt", { p_identifier: email, p_success: !signInError })
-    .single();
+  const record = await recordAttempt(email, !signInError);
 
   if (signInError) {
-    const record = recordData as AttemptState | null;
     if (record?.locked) {
       return { ok: false, locked: true, secondsRemaining: secondsUntil(record.locked_until) };
     }
