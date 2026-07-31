@@ -35,23 +35,30 @@ function StatusBanner({ status }: { status: ApplicationStatus }) {
   );
 }
 
-function DetailSection({
-  title,
-  items,
-}: {
-  title: string;
-  items: { label: string; value: string }[];
-}) {
+type DetailItem = {
+  label: string;
+  value: string;
+  fullWidth?: boolean;
+  muted?: boolean;
+};
+
+function DetailSection({ title, items }: { title: string; items: DetailItem[] }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</h2>
       <dl className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {items.map((item) => (
-          <div key={item.label}>
+          <div key={item.label} className={item.fullWidth ? "sm:col-span-2" : undefined}>
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
               {item.label}
             </dt>
-            <dd className="mt-1 text-sm text-slate-900">{item.value}</dd>
+            <dd
+              className={`mt-1 text-sm whitespace-pre-wrap ${
+                item.muted ? "text-slate-400 italic" : "text-slate-900"
+              }`}
+            >
+              {item.value}
+            </dd>
           </div>
         ))}
       </dl>
@@ -312,10 +319,18 @@ export function ApplicationDetail({
     setApproveOpen(false);
   }
 
+  const reasonForBorrowing = application.reason_for_borrowing?.trim() || null;
+
   const loanDetails = [
     { label: "Loan Amount", value: formatCurrency(application.loan_amount) },
     { label: "Term", value: `${application.loan_term_weeks} weeks` },
     { label: "Submitted", value: formatDate(application.created_at) },
+    {
+      label: "Reason for Borrowing",
+      value: reasonForBorrowing ?? "Not provided",
+      fullWidth: true,
+      muted: !reasonForBorrowing,
+    },
   ];
 
   const personalDetails = [

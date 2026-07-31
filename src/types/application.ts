@@ -22,6 +22,7 @@ export type Application = {
   address_doc_url: string | null;
   income_doc_url: string | null;
   ppsn_doc_url: string | null;
+  reason_for_borrowing: string | null;
 };
 
 export type ApplicationListItem = Pick<
