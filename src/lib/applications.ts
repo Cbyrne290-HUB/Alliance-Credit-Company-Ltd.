@@ -45,9 +45,70 @@ export const APPLICATION_DOCUMENT_FIELDS = [
   label: string;
 }[];
 
-export type DeclineApplicationResult = { ok: true } | { ok: false; error: string };
+export type DeclineApplicationResult =
+  | { ok: true; filesDeleted: boolean; cleanupError?: string }
+  | { ok: false; error: string };
 
-/** Keeps the application record for history — only its status changes. */
+const STORAGE_REMOVE_BATCH_SIZE = 100;
+
+function chunk<T>(arr: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    out.push(arr.slice(i, i + size));
+  }
+  return out;
+}
+
+/** Lists and removes every file under the application's storage folder
+ * (proof documents and signed declaration images alike), regardless of
+ * filename — so any new file type dropped under {applicationId}/ is
+ * cleaned up automatically. An empty or already-cleared folder is a
+ * no-op success, not an error. */
+async function deleteApplicationFolder(
+  supabase: SupabaseClient,
+  applicationId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data: files, error: listError } = await supabase.storage
+    .from(APPLICATION_DOCUMENTS_BUCKET)
+    .list(applicationId);
+
+  if (listError) {
+    return { ok: false, error: listError.message };
+  }
+
+  const paths = (files ?? []).map((file) => `${applicationId}/${file.name}`);
+  if (paths.length === 0) {
+    return { ok: true };
+  }
+
+  for (const batch of chunk(paths, STORAGE_REMOVE_BATCH_SIZE)) {
+    const { error: removeError } = await supabase.storage
+      .from(APPLICATION_DOCUMENTS_BUCKET)
+      .remove(batch);
+
+    if (removeError) {
+      return { ok: false, error: removeError.message };
+    }
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Keeps the application record for history — only its status changes —
+ * but permanently deletes its uploaded documents and signatures from
+ * storage, since a decline should not leave sensitive files behind.
+ *
+ * The DB status update runs first and is what actually finalizes the
+ * decline: once it succeeds, the application is "declined" and locked
+ * out of the approve/decline actions in the UI (see StatusBanner /
+ * ApplicationDetail, gated on status === "pending") regardless of what
+ * happens next. Storage cleanup is therefore treated as best-effort
+ * afterwards — if it fails, the function still reports success (the
+ * decline itself is real and irreversible) but flags the cleanup
+ * failure so the caller can surface it instead of silently leaving
+ * files behind.
+ */
 export async function declineApplication(
   supabase: SupabaseClient,
   applicationId: string,
@@ -61,7 +122,12 @@ export async function declineApplication(
     return { ok: false, error: error.message };
   }
 
-  return { ok: true };
+  const cleanup = await deleteApplicationFolder(supabase, applicationId);
+  if (!cleanup.ok) {
+    return { ok: true, filesDeleted: false, cleanupError: cleanup.error };
+  }
+
+  return { ok: true, filesDeleted: true };
 }
 
 export type ApproveApplicationParams = {

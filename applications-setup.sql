@@ -55,3 +55,18 @@ drop policy if exists "application_documents_authenticated_read" on storage.obje
 create policy "application_documents_authenticated_read" on storage.objects
   for select to authenticated
   using (bucket_id = 'application-documents');
+
+-- ------------------------------------------------------------
+-- storage: application-documents bucket — delete on decline
+--
+-- Declining an application deletes its entire {applicationId}/ folder
+-- (proof documents and signed declaration images) from this bucket via
+-- the admin-authenticated client (see declineApplication in
+-- src/lib/applications.ts). That call needs an explicit delete grant —
+-- the read policy above doesn't cover it — so this policy exists
+-- purely to make that cleanup possible.
+-- ------------------------------------------------------------
+drop policy if exists "application_documents_authenticated_delete" on storage.objects;
+create policy "application_documents_authenticated_delete" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'application-documents');

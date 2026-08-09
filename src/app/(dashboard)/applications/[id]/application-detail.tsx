@@ -9,7 +9,9 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { DEFAULT_INTEREST_RATE, computeLoanFinancials } from "@/lib/loans";
 import { getWeekOfYear } from "@/lib/dates";
 import { approveApplication, declineApplication } from "@/lib/applications";
+import type { DeclarationSignatureKey } from "@/lib/declarations";
 import type { Application, ApplicationStatus } from "@/types/application";
+import { DeclarationsSection } from "./declarations-section";
 
 type DocumentView = { label: string; path: string | null; signedUrl: string | null };
 
@@ -92,8 +94,8 @@ function DeclineDialog({
       <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg">
         <h2 className="text-base font-semibold text-slate-900">Decline application</h2>
         <p className="mt-2 text-sm text-slate-600">
-          The application will be marked as declined. This cannot be undone, but the record
-          is kept for your files.
+          The application will be marked as declined, and its uploaded documents and signed
+          declarations will be permanently deleted from storage. This cannot be undone.
         </p>
 
         {error && (
@@ -277,9 +279,11 @@ function ApproveDialog({
 export function ApplicationDetail({
   application: initialApplication,
   documents,
+  signatureUrls,
 }: {
   application: Application;
   documents: DocumentView[];
+  signatureUrls: Record<DeclarationSignatureKey, string | null>;
 }) {
   const { activeAgent } = useAgentContext();
   const [application, setApplication] = useState(initialApplication);
@@ -287,6 +291,7 @@ export function ApplicationDetail({
   const [declineOpen, setDeclineOpen] = useState(false);
   const [lightbox, setLightbox] = useState<{ label: string; url: string } | null>(null);
   const [newCustomer, setNewCustomer] = useState<{ id: string } | null>(null);
+  const [cleanupWarning, setCleanupWarning] = useState<string | null>(null);
 
   const fullName = `${application.first_name} ${application.last_name}`;
 
@@ -295,6 +300,11 @@ export function ApplicationDetail({
     const result = await declineApplication(supabase, application.id);
     if (!result.ok) throw new Error(result.error);
     setApplication((prev) => ({ ...prev, status: "declined" }));
+    setCleanupWarning(
+      result.filesDeleted
+        ? null
+        : `Application declined, but its uploaded files could not be removed automatically (${result.cleanupError}). Delete them manually from the application-documents bucket.`,
+    );
     setDeclineOpen(false);
   }
 
@@ -369,6 +379,12 @@ export function ApplicationDetail({
       />
       <div className="px-8 py-8">
         <div className="mx-auto max-w-2xl space-y-6">
+          {cleanupWarning && (
+            <p role="alert" className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+              {cleanupWarning}
+            </p>
+          )}
+
           <div className="flex items-center justify-between gap-4">
             <StatusBanner status={application.status} />
             {application.status === "pending" && (
@@ -441,6 +457,12 @@ export function ApplicationDetail({
               ))}
             </div>
           </div>
+
+          <DeclarationsSection
+            declarations={application.declarations}
+            signatureUrls={signatureUrls}
+            onOpenImage={(label, url) => setLightbox({ label, url })}
+          />
         </div>
       </div>
 

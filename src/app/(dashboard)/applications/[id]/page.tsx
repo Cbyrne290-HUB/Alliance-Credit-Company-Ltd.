@@ -5,6 +5,7 @@ import {
   APPLICATION_DOCUMENT_FIELDS,
   APPLICATION_SIGNED_URL_TTL_SECONDS,
 } from "@/lib/applications";
+import { getDeclarationSignatureRefs, type DeclarationSignatureKey } from "@/lib/declarations";
 import type { Application } from "@/types/application";
 import { ApplicationDetail } from "./application-detail";
 
@@ -38,5 +39,31 @@ export default async function ApplicationDetailPage({
     }),
   );
 
-  return <ApplicationDetail application={application} documents={documents} />;
+  const signatureEntries = await Promise.all(
+    getDeclarationSignatureRefs(application.declarations).map(async ({ key, path }) => {
+      let signedUrl: string | null = null;
+
+      if (path) {
+        const { data: signedData } = await supabase.storage
+          .from(APPLICATION_DOCUMENTS_BUCKET)
+          .createSignedUrl(path, APPLICATION_SIGNED_URL_TTL_SECONDS);
+        signedUrl = signedData?.signedUrl ?? null;
+      }
+
+      return [key, signedUrl] as const;
+    }),
+  );
+
+  const signatureUrls = Object.fromEntries(signatureEntries) as Record<
+    DeclarationSignatureKey,
+    string | null
+  >;
+
+  return (
+    <ApplicationDetail
+      application={application}
+      documents={documents}
+      signatureUrls={signatureUrls}
+    />
+  );
 }

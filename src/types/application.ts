@@ -1,5 +1,50 @@
 export type ApplicationStatus = "pending" | "approved" | "declined";
 
+export type DeclarationCheckboxes = Record<string, boolean>;
+
+export type Fca0Declaration = {
+  signature_path: string | null;
+  signed_at: string | null;
+};
+
+export type AppDeclaration = {
+  checkboxes: DeclarationCheckboxes;
+  signature_path: string | null;
+  signed_at: string | null;
+};
+
+export type IncomeDeclaration = {
+  checkboxes: DeclarationCheckboxes;
+  total_income: number | null;
+  total_expenditure: number | null;
+  total_disposable_income: number | null;
+  affordable_weekly_payment: number | null;
+  signature_path: string | null;
+  signed_at: string | null;
+};
+
+export type GdprDeclaration = {
+  checkboxes: DeclarationCheckboxes;
+  signature_path: string | null;
+  signed_at: string | null;
+};
+
+export type Ptc2Declaration = {
+  checkboxes: DeclarationCheckboxes;
+  signature_path_1: string | null;
+  signature_path_2: string | null;
+  signed_at_1: string | null;
+  signed_at_2: string | null;
+};
+
+export type ApplicationDeclarations = {
+  fca0: Fca0Declaration;
+  app: AppDeclaration;
+  income: IncomeDeclaration;
+  gdpr: GdprDeclaration;
+  ptc2: Ptc2Declaration;
+};
+
 export type Application = {
   id: string;
   created_at: string | null;
@@ -23,6 +68,7 @@ export type Application = {
   income_doc_url: string | null;
   ppsn_doc_url: string | null;
   reason_for_borrowing: string | null;
+  declarations: ApplicationDeclarations | null;
 };
 
 export type ApplicationListItem = Pick<
