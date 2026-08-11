@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { fromISODate } from "@/lib/dates";
@@ -9,6 +10,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { WeekLabel } from "@/components/ui/week-label";
 import { useAgentContext } from "@/components/agent/agent-provider";
 import { ArrearsReminderButton } from "@/components/messaging/arrears-reminder-button";
+import { DeleteLoanDialog } from "@/components/loans/delete-loan-dialog";
 import type { Loan, Payment } from "@/types/loan";
 import type { Customer } from "@/types/customer";
 
@@ -43,7 +45,9 @@ export function LoanLedger({
   const [draftAmount, setDraftAmount] = useState("");
   const [savingRowId, setSavingRowId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const { activeAgent } = useAgentContext();
+  const router = useRouter();
 
   const isCleared = loanState.status === "cleared";
 
@@ -143,15 +147,24 @@ export function LoanLedger({
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
               {loan.loan_reference}
             </h1>
-            {isCleared ? (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-                Cleared
-              </span>
-            ) : (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                Active
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {isCleared ? (
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                  Cleared
+                </span>
+              ) : (
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  Active
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+              >
+                Delete Loan
+              </button>
+            </div>
           </div>
 
           {loanState.arrears > 0 && !isCleared && (
@@ -330,6 +343,18 @@ export function LoanLedger({
         </div>
       </div>
       </div>
+
+      {deleteOpen && (
+        <DeleteLoanDialog
+          loanId={loan.id}
+          loanReference={loan.loan_reference}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={() => {
+            router.push(customer ? `/customers/${customer.id}` : "/customers");
+            router.refresh();
+          }}
+        />
+      )}
     </>
   );
 }

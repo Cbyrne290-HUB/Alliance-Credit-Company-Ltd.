@@ -227,3 +227,42 @@ export async function savePaymentForRow(
 
   return { ok: true, rows, balance, arrears, status };
 }
+
+export type DeleteLoanResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Deletes a single loan and its payment schedule, leaving the customer
+ * record and any other loans they have completely untouched. There is no
+ * ON DELETE CASCADE from payments to loans (deleteCustomerCascade in
+ * lib/customers.ts already has to delete payments explicitly for the same
+ * reason), so payments are removed first, then the loan itself — both
+ * scoped to activeAgent so a loan outside the caller's book can never be
+ * touched.
+ */
+export async function deleteLoanCascade(
+  supabase: SupabaseClient,
+  loanId: string,
+  activeAgent: ActiveAgent,
+): Promise<DeleteLoanResult> {
+  const { error: paymentsError } = await supabase
+    .from("payments")
+    .delete()
+    .eq("loan_id", loanId)
+    .eq("agent", activeAgent);
+
+  if (paymentsError) {
+    return { ok: false, error: paymentsError.message };
+  }
+
+  const { error: loanError } = await supabase
+    .from("loans")
+    .delete()
+    .eq("id", loanId)
+    .eq("agent", activeAgent);
+
+  if (loanError) {
+    return { ok: false, error: loanError.message };
+  }
+
+  return { ok: true };
+}
