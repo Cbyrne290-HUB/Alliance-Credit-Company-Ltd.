@@ -92,6 +92,46 @@ export function formatRangeLabel(start: Date, end: Date): string {
   return `${startLabel} – ${endLabel}`;
 }
 
+export type HistoryGranularity = "day" | "week" | "month";
+
+/** Chooses a chart bucket granularity for a custom date range based on how
+ * long it spans: short enough to read day-by-day, a few months reads
+ * better week-by-week, longer collapses to month-by-month. */
+export function granularityForRange(start: Date, end: Date): HistoryGranularity {
+  const spanDays =
+    Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  if (spanDays <= 9) return "day";
+  if (spanDays <= 120) return "week";
+  return "month";
+}
+
+/** Formats a chart bucket's start date into an x-axis label appropriate for
+ * its granularity: a weekday name when day buckets span a week or less (so
+ * "This Week" reads as Mon/Tue/...), day-and-month once day buckets run
+ * longer than a week (so "This Month" doesn't repeat the same weekday name
+ * ~4 times), the bucket's start date for week buckets, and a month name
+ * (with year only if the range crosses more than one calendar year) for
+ * month buckets. */
+export function formatHistoryBucketLabel(
+  bucketStart: Date,
+  granularity: HistoryGranularity,
+  rangeSpanDays: number,
+  multiYear: boolean,
+): string {
+  if (granularity === "day") {
+    return rangeSpanDays <= 7
+      ? bucketStart.toLocaleDateString("en-IE", { weekday: "short" })
+      : formatShort(bucketStart);
+  }
+  if (granularity === "week") {
+    return formatShort(bucketStart);
+  }
+  return bucketStart.toLocaleDateString(
+    "en-IE",
+    multiYear ? { month: "short", year: "numeric" } : { month: "short" },
+  );
+}
+
 /** The month index (0-based) that starts each week-numbering cycle: June. */
 const CYCLE_START_MONTH = 5;
 

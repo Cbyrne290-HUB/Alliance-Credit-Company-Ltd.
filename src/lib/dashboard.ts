@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { round2 } from "@/lib/loans";
 import { fetchAllRows } from "@/lib/fetch-all";
 import type { ActiveAgent } from "@/types/agent";
-import { fromISODate } from "@/lib/dates";
+import { formatHistoryBucketLabel, fromISODate, type HistoryGranularity } from "@/lib/dates";
 
 export type DashboardMetrics = {
   totalCollected: number;
@@ -30,8 +30,8 @@ export type AgingBucket = {
   amount: number;
 };
 
-export type MonthlyHistoryPoint = {
-  month: string;
+export type LoanHistoryPoint = {
+  label: string;
   totalCollected: number;
   totalOutOnLoan: number;
 };
@@ -162,39 +162,53 @@ function computeAgingBuckets(arrears: ArrearsRow[]): AgingBucket[] {
 }
 
 /**
- * Reconstructs a monthly Total Collected / Total Out on Loan trend. This
- * used to pull every loan and every payment for the agent (tens of
- * thousands of rows once the book is a few hundred customers deep) just to
- * sum them into 6 numbers in JS — now delegated to a Postgres function
- * (see loan_overview_history in the RLS/scaling SQL) that computes the same
- * sums with SQL aggregates and returns just `monthsCount` rows. The function
- * runs as SECURITY INVOKER, so it's still subject to the same agent_is_visible
- * RLS policy as a direct table query — passing a foreign agent value can't
- * leak rows the caller isn't otherwise allowed to see.
+ * Reconstructs a Total Collected / Total Out on Loan trend at whatever
+ * granularity the caller's date range calls for (day/week/month), so the
+ * dashboard's Loan Overview chart can show ~7 daily points for "This
+ * Week", ~30 for "This Month", 12 monthly points for "This Year", or an
+ * appropriately-scaled bucket count for a custom range. Delegated to a
+ * Postgres function (see loan-overview-history.sql) that computes the
+ * sums with SQL aggregates rather than pulling every loan and payment for
+ * the agent into JS. The function runs as SECURITY INVOKER, so it's still
+ * subject to the same agent_is_visible RLS policy as a direct table
+ * query — passing a foreign agent value can't leak rows the caller isn't
+ * otherwise allowed to see.
  */
 export async function fetchLoanOverviewHistory(
   supabase: SupabaseClient,
   activeAgent: ActiveAgent,
-  monthsCount = 6,
-): Promise<MonthlyHistoryPoint[]> {
+  range: { start: string; end: string; granularity: HistoryGranularity },
+): Promise<LoanHistoryPoint[]> {
   const { data, error } = await supabase.rpc("loan_overview_history", {
     p_agent: activeAgent,
-    p_months: monthsCount,
+    p_start: range.start,
+    p_end: range.end,
+    p_granularity: range.granularity,
   });
 
   if (error) throw new Error(error.message);
 
+  const rangeSpanDays =
+    Math.round(
+      (fromISODate(range.end).getTime() - fromISODate(range.start).getTime()) /
+        (1000 * 60 * 60 * 24),
+    ) + 1;
+  const multiYear =
+    fromISODate(range.start).getFullYear() !== fromISODate(range.end).getFullYear();
+
   return (
     (data ?? []) as {
-      month_start: string;
+      bucket_start: string;
       total_collected: number | string;
       total_out_on_loan: number | string;
     }[]
   ).map((row) => ({
-    month: fromISODate(row.month_start).toLocaleDateString("en-IE", {
-      month: "short",
-      year: "numeric",
-    }),
+    label: formatHistoryBucketLabel(
+      fromISODate(row.bucket_start),
+      range.granularity,
+      rangeSpanDays,
+      multiYear,
+    ),
     totalCollected: round2(Number(row.total_collected)),
     totalOutOnLoan: round2(Number(row.total_out_on_loan)),
   }));

@@ -9,6 +9,7 @@ export default async function DashboardPage() {
   const initialRange = {
     start: toISODate(getMonday(today)),
     end: toISODate(getSunday(today)),
+    granularity: "day" as const,
   };
 
   const supabase = await createClient();
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   const [{ metrics, arrears, statusBreakdown, agingBuckets }, history] =
     await Promise.all([
       fetchDashboardData(supabase, initialRange, activeAgent),
-      fetchLoanOverviewHistory(supabase, activeAgent),
+      fetchLoanOverviewHistory(supabase, activeAgent, initialRange),
     ]);
 
   return (

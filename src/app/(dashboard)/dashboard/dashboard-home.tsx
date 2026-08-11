@@ -27,19 +27,18 @@ import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/format";
 import {
   fetchDashboardData,
+  fetchLoanOverviewHistory,
   type AgingBucket,
   type ArrearsRow,
   type DashboardMetrics,
-  type MonthlyHistoryPoint,
+  type LoanHistoryPoint,
   type StatusBreakdown,
 } from "@/lib/dashboard";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRangePicker, type DateRange } from "@/components/ui/date-range-picker";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { useAgentContext } from "@/components/agent/agent-provider";
 import { ChristmasBroadcastButton } from "@/components/messaging/christmas-broadcast-button";
-
-type DateRange = { start: string; end: string };
 
 const STATUS_COLORS: Record<string, string> = {
   Active: "#2563eb",
@@ -53,26 +52,31 @@ export function DashboardHome({
   initialArrears,
   statusBreakdown,
   agingBuckets,
-  history,
+  history: initialHistory,
 }: {
   initialRange: DateRange;
   initialMetrics: DashboardMetrics;
   initialArrears: ArrearsRow[];
   statusBreakdown: StatusBreakdown;
   agingBuckets: AgingBucket[];
-  history: MonthlyHistoryPoint[];
+  history: LoanHistoryPoint[];
 }) {
   const [metrics, setMetrics] = useState(initialMetrics);
   const [arrears, setArrears] = useState(initialArrears);
+  const [history, setHistory] = useState(initialHistory);
   const [isPending, startTransition] = useTransition();
   const { activeAgent } = useAgentContext();
 
   function handleRangeChange(next: DateRange) {
     startTransition(async () => {
       const supabase = createClient();
-      const result = await fetchDashboardData(supabase, next, activeAgent);
-      setMetrics(result.metrics);
-      setArrears(result.arrears);
+      const [dashboardResult, historyResult] = await Promise.all([
+        fetchDashboardData(supabase, next, activeAgent),
+        fetchLoanOverviewHistory(supabase, activeAgent, next),
+      ]);
+      setMetrics(dashboardResult.metrics);
+      setArrears(dashboardResult.arrears);
+      setHistory(historyResult);
     });
   }
 
@@ -133,7 +137,7 @@ export function DashboardHome({
                 <LineChart data={history}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis
-                    dataKey="month"
+                    dataKey="label"
                     tick={{ fontSize: 12, fill: "#64748b" }}
                     axisLine={false}
                     tickLine={false}

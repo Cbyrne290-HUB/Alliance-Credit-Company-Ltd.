@@ -11,14 +11,16 @@ import {
   fromISODate,
   getMonday,
   getSunday,
+  granularityForRange,
   isSameDay,
   startOfMonth,
   startOfYear,
   toISODate,
+  type HistoryGranularity,
 } from "@/lib/dates";
 
 type Preset = "week" | "month" | "year" | "custom";
-type DateRange = { start: string; end: string };
+export type DateRange = { start: string; end: string; granularity: HistoryGranularity };
 
 const PRESETS: { key: Preset; label: string }[] = [
   { key: "week", label: "This Week" },
@@ -34,17 +36,20 @@ function presetRange(preset: "week" | "month" | "year", today: Date): DateRange 
     return {
       start: toISODate(getMonday(today)),
       end: toISODate(getSunday(today)),
+      granularity: "day",
     };
   }
   if (preset === "month") {
     return {
       start: toISODate(startOfMonth(today)),
       end: toISODate(endOfMonth(today)),
+      granularity: "day",
     };
   }
   return {
     start: toISODate(startOfYear(today)),
     end: toISODate(endOfYear(today)),
+    granularity: "month",
   };
 }
 
@@ -110,13 +115,17 @@ export function DateRangePicker({
 
     if (!selectingStart) {
       setSelectingStart(day);
-      setRange({ start: toISODate(day), end: toISODate(day) });
+      setRange({ start: toISODate(day), end: toISODate(day), granularity: "day" });
       return;
     }
 
     const start = selectingStart.getTime() <= day.getTime() ? selectingStart : day;
     const end = selectingStart.getTime() <= day.getTime() ? day : selectingStart;
-    const next = { start: toISODate(start), end: toISODate(end) };
+    const next: DateRange = {
+      start: toISODate(start),
+      end: toISODate(end),
+      granularity: granularityForRange(start, end),
+    };
 
     setSelectingStart(null);
     setHoverDate(null);
