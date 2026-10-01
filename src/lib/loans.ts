@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Payment } from "@/types/loan";
+import type { Payment, PaymentSource } from "@/types/loan";
 import type { ActiveAgent } from "@/types/agent";
 
 export const DEFAULT_TERM_WEEKS = 37;
@@ -163,11 +163,46 @@ export type SavePaymentResult =
     }
   | { ok: false; error: string };
 
+export type LedgerLoan = { id: string; total_repayable: number; weekly_payment: number };
+
 /**
  * Applies one week's payment and recomputes the whole ledger from the full
  * payment history, then persists every row plus the loan's new
  * balance/arrears/status. Used by both the Loan Ledger and the Collections
  * Sheet so they can never drift apart.
+ *
+ * source stamps which screen recorded the payment — Retract Week only ever
+ * resets rows stamped "collections", so a ledger correction (which
+ * re-stamps the row "ledger") can never be wiped by it.
+ */
+export async function savePaymentForRow(
+  supabase: SupabaseClient,
+  loan: LedgerLoan,
+  payments: Payment[],
+  rowId: string,
+  amount: number,
+  paymentDate: string,
+  source: PaymentSource,
+  activeAgent: ActiveAgent,
+): Promise<SavePaymentResult> {
+  const updatedPayments = payments.map((p) =>
+    p.id === rowId
+      ? { ...p, amount_paid: amount, payment_date: paymentDate, payment_source: source }
+      : p,
+  );
+
+  return persistLedger(supabase, loan, updatedPayments, activeAgent);
+}
+
+/**
+ * Recomputes the ledger (computeLedger) from an already-modified payment
+ * history and persists every row plus the loan's new balance/arrears/status.
+ * The single write path shared by savePaymentForRow and Retract Week, so
+ * saving and retracting can never drift apart.
+ *
+ * payments must be the loan's COMPLETE history: every row is upserted, and
+ * payment_source is written back for every row from what was loaded, so a
+ * row's stamp is only ever changed by the caller's explicit modification.
  *
  * activeAgent scopes the loan update so a write can never land on a loan
  * outside the caller's active book. The payment rows themselves aren't
@@ -175,21 +210,14 @@ export type SavePaymentResult =
  * only ever come from a payments array the caller already loaded scoped to
  * activeAgent.
  */
-export async function savePaymentForRow(
+export async function persistLedger(
   supabase: SupabaseClient,
-  loan: { id: string; total_repayable: number; weekly_payment: number },
+  loan: LedgerLoan,
   payments: Payment[],
-  rowId: string,
-  amount: number,
-  paymentDate: string,
   activeAgent: ActiveAgent,
 ): Promise<SavePaymentResult> {
-  const updatedPayments = payments.map((p) =>
-    p.id === rowId ? { ...p, amount_paid: amount, payment_date: paymentDate } : p,
-  );
-
   const { rows, balance, arrears, status } = computeLedger(
-    updatedPayments,
+    payments,
     loan.total_repayable,
     loan.weekly_payment,
   );
@@ -206,6 +234,7 @@ export async function savePaymentForRow(
         status: r.status,
         flagged: r.flagged,
         payment_date: r.payment_date,
+        payment_source: r.payment_source ?? null,
       })),
     ),
     supabase

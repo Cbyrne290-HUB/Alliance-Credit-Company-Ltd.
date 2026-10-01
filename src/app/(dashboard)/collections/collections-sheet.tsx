@@ -5,6 +5,9 @@ import { Users, CheckCircle2, Landmark } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/format";
 import { fetchPaymentsForLoan, findNextPendingRow, savePaymentForRow } from "@/lib/loans";
+import { previewRetractWeek, retractLoanWeek } from "@/lib/retract-week";
+import { RetractWeekDialog } from "@/components/collections/retract-week-dialog";
+import type { Payment } from "@/types/loan";
 import { fromISODate, formatRangeLabel, getWeekOfYear } from "@/lib/dates";
 import { WeekPicker } from "@/components/ui/week-picker";
 import { PageHeader } from "@/components/layout/page-header";
@@ -49,7 +52,10 @@ export function CollectionsSheet({
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [showRetractDialog, setShowRetractDialog] = useState(false);
+  const [isRetracting, setIsRetracting] = useState(false);
   const { activeAgent } = useAgentContext();
+  const isBusy = isSavingAll || isRetracting || savingLoanId !== null;
 
   function handleWeekChange(next: WeekRange) {
     setWeek(next);
@@ -110,6 +116,7 @@ export function CollectionsSheet({
       nextPending.id,
       amount,
       week.start,
+      "collections",
       activeAgent,
     );
 
@@ -118,6 +125,15 @@ export function CollectionsSheet({
       return { ok: false };
     }
 
+    applyLedgerResult(loanId, result);
+    return { ok: true };
+  }
+
+  /** Refreshes one loan's row after a save or retract recomputed its ledger. */
+  function applyLedgerResult(
+    loanId: string,
+    result: { rows: Payment[]; balance: number; arrears: number; status: string },
+  ) {
     const newNextRow = findNextPendingRow(result.rows);
     setNextPendingByLoan((prev) => {
       const next = { ...prev };
@@ -132,23 +148,100 @@ export function CollectionsSheet({
       }
       return next;
     });
-    setLoansState((prev) => ({
-      ...prev,
-      [loanId]: {
-        ...prev[loanId],
-        balance: result.balance,
-        arrears: result.arrears,
-        status: result.status,
-      },
-    }));
+    setLoansState((prev) => {
+      if (!prev[loanId]) return prev;
+      return {
+        ...prev,
+        [loanId]: {
+          ...prev[loanId],
+          balance: result.balance,
+          arrears: result.arrears,
+          status: result.status,
+        },
+      };
+    });
     setDrafts((prev) => {
       if (!(loanId in prev)) return prev;
       const next = { ...prev };
       delete next[loanId];
       return next;
     });
+  }
 
-    return { ok: true };
+  /**
+   * Runs the retract after the dialog's confirm. Re-checks the preview fresh
+   * (including the later-payments guard) rather than trusting what the
+   * dialog showed, then retracts each affected loan independently so one
+   * failure doesn't stop the rest — and since rows are found by stamp +
+   * week + agent, running it again finishes any that failed.
+   */
+  async function handleRetractWeek() {
+    setIsRetracting(true);
+    setBulkMessage(null);
+    setBulkError(null);
+
+    const supabase = createClient();
+    const retractWeek = { start: week.start, end: week.end };
+
+    let preview;
+    try {
+      preview = await previewRetractWeek(supabase, activeAgent, retractWeek);
+    } catch (err) {
+      setBulkError(err instanceof Error ? err.message : "Could not load the week's payments.");
+      setIsRetracting(false);
+      setShowRetractDialog(false);
+      return;
+    }
+
+    if (preview.laterPaymentCount > 0) {
+      setBulkError(
+        "This week can't be retracted because there are payments dated after it. Retract later weeks first.",
+      );
+      setIsRetracting(false);
+      setShowRetractDialog(false);
+      return;
+    }
+
+    const results = await Promise.all(
+      preview.loanIds.map(async (loanId) => ({
+        loanId,
+        result: await retractLoanWeek(supabase, loanId, retractWeek, activeAgent),
+      })),
+    );
+
+    let retractedPayments = 0;
+    const failedLoanIds: string[] = [];
+    const nextRowErrors: Record<string, string> = {};
+    for (const { loanId, result } of results) {
+      if (!result.ok) {
+        failedLoanIds.push(loanId);
+        nextRowErrors[loanId] = `Retract failed: ${result.error}`;
+        continue;
+      }
+      retractedPayments += result.retractedCount ?? 0;
+      applyLedgerResult(loanId, result);
+    }
+
+    setRowErrors((prev) => {
+      const next = { ...prev };
+      for (const { loanId, result } of results) {
+        if (result.ok) delete next[loanId];
+      }
+      return { ...next, ...nextRowErrors };
+    });
+
+    setIsRetracting(false);
+    setShowRetractDialog(false);
+
+    if (failedLoanIds.length > 0) {
+      setBulkError(
+        `${failedLoanIds.length} of ${preview.loanIds.length} loans failed to retract (highlighted rows). Run Retract Week again to finish them.`,
+      );
+    } else {
+      setBulkMessage(
+        `Retracted ${retractedPayments} payment${retractedPayments === 1 ? "" : "s"} across ${preview.loanIds.length} loan${preview.loanIds.length === 1 ? "" : "s"}.`,
+      );
+    }
   }
 
   async function handleSaveRow(loanId: string) {
@@ -353,7 +446,7 @@ export function CollectionsSheet({
                                 [loan.loanId]: e.target.value,
                               }))
                             }
-                            disabled={savingLoanId === loan.loanId || isSavingAll}
+                            disabled={savingLoanId === loan.loanId || isSavingAll || isRetracting}
                             className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
                           />
                         ) : (
@@ -375,7 +468,7 @@ export function CollectionsSheet({
                           <button
                             type="button"
                             onClick={() => handleSaveRow(loan.loanId)}
-                            disabled={savingLoanId === loan.loanId || isSavingAll}
+                            disabled={savingLoanId === loan.loanId || isSavingAll || isRetracting}
                             className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {savingLoanId === loan.loanId ? "Saving..." : "Save"}
@@ -399,22 +492,45 @@ export function CollectionsSheet({
             </p>
           )}
 
-          {filteredLoans.some((l) => l.status === "active") && (
-            <div className="border-t border-slate-100 px-4 py-3">
+          <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3">
+            {filteredLoans.some((l) => l.status === "active") && (
               <button
                 type="button"
                 onClick={handleSaveAll}
-                disabled={isSavingAll || savingLoanId !== null}
+                disabled={isBusy}
                 className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSavingAll ? "Saving All..." : "Save All"}
               </button>
-            </div>
-          )}
+            )}
+            {/* Shown regardless of filter: an accidental Save All can clear
+                loans, which then drop out of the Ongoing view. */}
+            <button
+              type="button"
+              onClick={() => {
+                setBulkMessage(null);
+                setBulkError(null);
+                setShowRetractDialog(true);
+              }}
+              disabled={isBusy}
+              className="ml-auto rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRetracting ? "Retracting..." : "Retract Week"}
+            </button>
+          </div>
         </div>
       </div>
       </div>
       </div>
+
+      {showRetractDialog && (
+        <RetractWeekDialog
+          week={week}
+          weekLabel={`week ${weekInfo.week} (${weekRangeLabel})`}
+          onClose={() => setShowRetractDialog(false)}
+          onConfirm={handleRetractWeek}
+        />
+      )}
 
       <div id="print-collection-sheet" className="hidden print:block">
         {printPages.map((page, pageIndex) => {

@@ -91,6 +91,7 @@ export function LoanLedger({
       activeRowId,
       amount,
       today,
+      "ledger",
       activeAgent,
     );
 

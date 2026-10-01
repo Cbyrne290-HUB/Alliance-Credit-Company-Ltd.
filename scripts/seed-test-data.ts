@@ -203,6 +203,7 @@ function buildLoanAndPayments(
       status: null,
       flagged: null,
       payment_date: s.payment_date,
+      payment_source: null,
       notes: null,
       created_at: null,
     })),
