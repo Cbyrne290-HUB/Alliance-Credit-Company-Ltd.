@@ -10,9 +10,10 @@ import {
   Scale,
   Users,
   ClipboardList,
-  FileBarChart,
-  UserCog,
-  Settings,
+  // Re-add these when the Reports / Users / Settings pages are built:
+  // FileBarChart,
+  // UserCog,
+  // Settings,
   type LucideIcon,
 } from "lucide-react";
 import { useAgentContext } from "@/components/agent/agent-provider";
@@ -24,9 +25,11 @@ const NAV_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/collections", label: "Collections", icon: Wallet },
   { href: "/balancing", label: "Balancing", icon: Scale },
   { href: "/customers", label: "Customers", icon: Users },
-  { href: "/reports", label: "Reports", icon: FileBarChart },
-  { href: "/users", label: "Users", icon: UserCog },
-  { href: "/settings", label: "Settings", icon: Settings },
+  // Hidden until built (pages are still "coming soon" placeholders).
+  // Uncomment these and their icon imports above to restore them.
+  // { href: "/reports", label: "Reports", icon: FileBarChart },
+  // { href: "/users", label: "Users", icon: UserCog },
+  // { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 function isActive(href: string, pathname: string | null) {
@@ -72,7 +75,7 @@ export function Sidebar() {
         />
       </div>
 
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-2 px-3">
         {NAV_LINKS.map((link) => {
           const active = isActive(link.href, pathname);
           const Icon = link.icon;
@@ -82,11 +85,11 @@ export function Sidebar() {
               href={link.href}
               className={
                 active
-                  ? "flex items-center gap-3 rounded-lg bg-[#c9a84c] px-3 py-2.5 text-sm font-medium text-black shadow-sm"
-                  : "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-[#c9a84c]/10 hover:text-[#c9a84c]"
+                  ? "flex items-center gap-4 rounded-lg bg-[#c9a84c] px-4 py-3.5 text-lg font-semibold text-black shadow-sm"
+                  : "flex items-center gap-4 rounded-lg px-4 py-3.5 text-lg font-medium text-slate-200 transition-colors hover:bg-[#c9a84c]/10 hover:text-[#c9a84c]"
               }
             >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
+              <Icon className="h-6 w-6 shrink-0" />
               {link.label}
             </Link>
           );
