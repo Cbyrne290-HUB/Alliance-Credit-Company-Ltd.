@@ -46,7 +46,7 @@ type DetailItem = {
 
 function DetailSection({ title, items }: { title: string; items: DetailItem[] }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</h2>
       <dl className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
         {items.map((item) => (
@@ -179,7 +179,7 @@ function ApproveDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-lg"
       >
         <h2 className="text-base font-semibold text-slate-900">Approve application</h2>
         <p className="mt-2 text-sm text-slate-600">
@@ -220,7 +220,7 @@ function ApproveDialog({
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
               autoFocus
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm sm:text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -232,7 +232,7 @@ function ApproveDialog({
                 type="number"
                 value={walkingOrder}
                 onChange={(e) => setWalkingOrder(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm sm:text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
               />
             </div>
             <div>
@@ -242,7 +242,7 @@ function ApproveDialog({
                 required
                 value={startWeek}
                 onChange={(e) => setStartWeek(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm sm:text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
               />
             </div>
           </div>
@@ -377,7 +377,7 @@ export function ApplicationDetail({
           { label: fullName },
         ]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-2xl space-y-6">
           {cleanupWarning && (
             <p role="alert" className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
@@ -385,10 +385,10 @@ export function ApplicationDetail({
             </p>
           )}
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <StatusBanner status={application.status} />
             {application.status === "pending" && (
-              <div className="flex shrink-0 gap-2">
+              <div className="flex shrink-0 gap-2 max-sm:[&>button]:flex-1">
                 <button
                   type="button"
                   onClick={() => setDeclineOpen(true)}
@@ -408,7 +408,7 @@ export function ApplicationDetail({
           </div>
 
           {newCustomer && (
-            <div className="flex items-center justify-between gap-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <div className="flex items-center justify-between gap-4 max-sm:flex-wrap max-sm:gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
               <p className="text-sm font-medium text-emerald-800">
                 Customer created from this application.
               </p>
@@ -425,7 +425,7 @@ export function ApplicationDetail({
           <DetailSection title="Personal Details" items={personalDetails} />
           <DetailSection title="Employment & Income" items={incomeDetails} />
 
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Documents
             </h2>
@@ -480,7 +480,7 @@ export function ApplicationDetail({
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 sm:p-6"
           onClick={() => setLightbox(null)}
         >
           <div className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
@@ -498,7 +498,7 @@ export function ApplicationDetail({
             <img
               src={lightbox.url}
               alt={lightbox.label}
-              className="max-h-[80vh] w-auto rounded-lg object-contain"
+              className="max-h-[80vh] w-auto rounded-lg object-contain max-md:max-w-full"
             />
           </div>
         </div>

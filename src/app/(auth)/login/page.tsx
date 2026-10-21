@@ -78,7 +78,7 @@ export default function LoginPage() {
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white shadow-sm placeholder:text-slate-500 focus:border-[#c9a84c] focus:outline-none focus:ring-1 focus:ring-[#c9a84c]"
+                className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base text-white shadow-sm sm:text-sm placeholder:text-slate-500 focus:border-[#c9a84c] focus:outline-none focus:ring-1 focus:ring-[#c9a84c]"
               />
             </div>
 
@@ -97,7 +97,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white shadow-sm focus:border-[#c9a84c] focus:outline-none focus:ring-1 focus:ring-[#c9a84c]"
+                className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base text-white shadow-sm sm:text-sm focus:border-[#c9a84c] focus:outline-none focus:ring-1 focus:ring-[#c9a84c]"
               />
             </div>
 

@@ -148,7 +148,7 @@ export function CustomerDocuments({
                         className="h-full w-full object-cover"
                       />
                     </button>
-                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-slate-900/70 px-2 py-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-slate-900/70 px-2 py-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 max-md:py-2">
                       <button
                         type="button"
                         onClick={() => fileInputs.current[doc.slug]?.click()}
@@ -213,7 +213,7 @@ export function CustomerDocuments({
 
       {lightbox && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 sm:p-6"
           onClick={() => setLightbox(null)}
         >
           <div className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
@@ -231,7 +231,7 @@ export function CustomerDocuments({
             <img
               src={lightbox.url}
               alt={lightbox.label}
-              className="max-h-[80vh] w-auto rounded-lg object-contain"
+              className="max-h-[80vh] w-auto rounded-lg object-contain max-md:max-w-full"
             />
           </div>
         </div>

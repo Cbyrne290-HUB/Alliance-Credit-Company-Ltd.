@@ -97,19 +97,19 @@ export default async function CustomerProfilePage({
           { label: fullName },
         ]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-2xl">
           <div className="mb-6 flex justify-end gap-2">
             <Link
               href={`/customers/${customer.id}/edit`}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm sm:py-2 font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
             >
               Edit
             </Link>
             <DeleteCustomerButton customerId={customer.id} customerName={fullName} />
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="flex items-center gap-4">
               <Avatar name={fullName} />
               <h1 className="text-xl font-semibold tracking-tight text-slate-900">
@@ -123,13 +123,13 @@ export default async function CustomerProfilePage({
                   <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
                     {d.label}
                   </dt>
-                  <dd className="mt-1 text-sm text-slate-900">{d.value}</dd>
+                  <dd className="mt-1 text-sm text-slate-900 break-words">{d.value}</dd>
                 </div>
               ))}
             </dl>
           </div>
 
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Documents
             </h2>
@@ -141,14 +141,14 @@ export default async function CustomerProfilePage({
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">
                 Loans
               </h2>
               <Link
                 href={`/customers/${customer.id}/loans/new`}
-                className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-slate-800"
+                className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium sm:py-1.5 text-white transition-colors hover:bg-slate-800"
               >
                 Create New Loan
               </Link>

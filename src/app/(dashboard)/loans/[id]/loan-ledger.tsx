@@ -141,10 +141,10 @@ export function LoanLedger({
           { label: loan.loan_reference },
         ]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-4xl">
-        <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <div className="flex items-center justify-between max-sm:flex-wrap max-sm:gap-3">
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
               {loan.loan_reference}
             </h1>
@@ -161,7 +161,7 @@ export function LoanLedger({
               <button
                 type="button"
                 onClick={() => setDeleteOpen(true)}
-                className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                className="rounded-md border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 sm:py-1.5 transition-colors hover:bg-red-50"
               >
                 Delete Loan
               </button>
@@ -169,7 +169,7 @@ export function LoanLedger({
           </div>
 
           {loanState.arrears > 0 && !isCleared && (
-            <div className="mt-3 flex items-center justify-between gap-4">
+            <div className="mt-3 flex items-center justify-between gap-4 max-sm:flex-wrap max-sm:gap-2">
               <p className="text-sm text-red-600">
                 In arrears: {formatCurrency(loanState.arrears)}
               </p>
@@ -241,6 +241,7 @@ export function LoanLedger({
                             <input
                               type="number"
                               step="any"
+                              inputMode="decimal"
                               autoFocus
                               value={draftAmount}
                               onChange={(e) => setDraftAmount(e.target.value)}
@@ -251,13 +252,13 @@ export function LoanLedger({
                                 }
                               }}
                               disabled={savingRowId === row.id}
-                              className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                              className="w-24 rounded-md border border-slate-300 px-2 py-2 text-base text-slate-900 sm:py-1 sm:text-sm shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
                             />
                             <button
                               type="button"
                               onClick={handleSave}
                               disabled={savingRowId === row.id}
-                              className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium sm:px-2.5 sm:py-1 text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {savingRowId === row.id ? "Saving..." : "Save"}
                             </button>
@@ -266,7 +267,7 @@ export function LoanLedger({
                                 type="button"
                                 onClick={cancelEditing}
                                 disabled={savingRowId === row.id}
-                                className="text-xs text-slate-500 hover:text-slate-700"
+                                className="text-xs text-slate-500 hover:text-slate-700 max-sm:px-1 max-sm:py-2"
                               >
                                 Cancel
                               </button>
@@ -278,7 +279,7 @@ export function LoanLedger({
                             <button
                               type="button"
                               onClick={() => startEditing(row)}
-                              className="text-xs text-slate-500 hover:text-slate-700"
+                              className="text-xs text-slate-500 hover:text-slate-700 max-sm:px-1 max-sm:py-2"
                             >
                               Edit
                             </button>

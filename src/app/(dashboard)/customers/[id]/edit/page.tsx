@@ -51,9 +51,9 @@ export default async function EditCustomerPage({
           { label: "Edit" },
         ]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-xl">
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
               Edit Customer
             </h1>

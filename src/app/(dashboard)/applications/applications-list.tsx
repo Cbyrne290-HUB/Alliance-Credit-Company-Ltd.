@@ -73,7 +73,7 @@ export function ApplicationsList({
         title="Applications"
         breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Applications" }]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <StatCard
@@ -102,7 +102,7 @@ export function ApplicationsList({
             />
           </div>
 
-          <div className="mt-6 flex items-center gap-2">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             {FILTERS.map((f) => (
               <button
                 key={f.key}
@@ -121,15 +121,15 @@ export function ApplicationsList({
 
           <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full text-sm sm:min-w-[720px]">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                    <th className="px-4 py-3">Applicant</th>
-                    <th className="px-4 py-3">Loan Amount</th>
-                    <th className="px-4 py-3">Term</th>
-                    <th className="px-4 py-3">Submitted</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3" />
+                    <th className="px-3 py-3 sm:px-4">Applicant</th>
+                    <th className="px-3 py-3 sm:px-4">Loan Amount</th>
+                    <th className="hidden px-4 py-3 sm:table-cell">Term</th>
+                    <th className="hidden px-4 py-3 sm:table-cell">Submitted</th>
+                    <th className="px-3 py-3 sm:px-4">Status</th>
+                    <th className="px-3 py-3 sm:px-4" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -153,26 +153,32 @@ export function ApplicationsList({
                             : "transition-colors hover:bg-slate-50"
                         }
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <p className="font-medium text-slate-900">{fullName}</p>
+                          <p className="text-xs text-slate-400 sm:hidden">
+                            {formatDate(application.created_at)}
+                          </p>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="px-3 py-3 text-slate-600 sm:px-4">
                           {formatCurrency(application.loan_amount)}
+                          <p className="text-xs text-slate-400 sm:hidden">
+                            {application.loan_term_weeks} weeks
+                          </p>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">
                           {application.loan_term_weeks} weeks
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">
                           {formatDate(application.created_at)}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <StatusPill status={application.status} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <div className="flex items-center justify-end">
                             <Link
                               href={`/applications/${application.id}`}
-                              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium sm:py-1.5 text-slate-700 transition-colors hover:bg-slate-50"
                             >
                               Review
                             </Link>

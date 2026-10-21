@@ -128,12 +128,12 @@ export function BalancingSheet({
         title="Balancing"
         breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Balancing" }]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-3xl">
           <WeekPicker selectedWeek={week} onWeekChange={handleWeekChange} />
 
           <div
-            className={`mt-6 rounded-xl border border-slate-200 bg-white p-8 shadow-sm transition-opacity duration-200 ${
+            className={`mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 transition-opacity duration-200 ${
               isPending ? "opacity-60" : ""
             }`}
           >

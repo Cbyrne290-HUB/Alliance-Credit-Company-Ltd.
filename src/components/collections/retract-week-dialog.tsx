@@ -69,7 +69,7 @@ export function RetractWeekDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
+      <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-lg">
         <h2 className="text-base font-semibold text-slate-900">Retract week</h2>
 
         {state.kind === "loading" && (

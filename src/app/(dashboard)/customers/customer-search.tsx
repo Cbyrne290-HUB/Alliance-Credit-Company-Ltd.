@@ -68,7 +68,7 @@ export function CustomerSearch({
         title="Customers"
         breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Customers" }]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard
@@ -110,14 +110,14 @@ export function CustomerSearch({
 
           <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full text-sm sm:min-w-[720px]">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                    <th className="px-4 py-3">Customer</th>
-                    <th className="px-4 py-3">Phone</th>
-                    <th className="px-4 py-3">Loans</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3" />
+                    <th className="px-3 py-3 sm:px-4">Customer</th>
+                    <th className="hidden px-4 py-3 sm:table-cell">Phone</th>
+                    <th className="hidden px-4 py-3 sm:table-cell">Loans</th>
+                    <th className="px-3 py-3 sm:px-4">Status</th>
+                    <th className="px-3 py-3 sm:px-4" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -139,9 +139,11 @@ export function CustomerSearch({
                         key={c.id}
                         className="transition-colors hover:bg-slate-50"
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <div className="flex items-center gap-3">
-                            <Avatar name={fullName} />
+                            <span className="hidden sm:contents">
+                              <Avatar name={fullName} />
+                            </span>
                             <div>
                               <p className="font-medium text-slate-900">
                                 {fullName}
@@ -149,23 +151,28 @@ export function CustomerSearch({
                               <p className="text-xs text-slate-400">
                                 {c.account_number}
                               </p>
+                              {c.phone && (
+                                <p className="text-xs text-slate-500 sm:hidden">
+                                  {c.phone}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">
                           {c.phone ?? "—"}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="hidden px-4 py-3 text-slate-600 sm:table-cell">
                           {c.loanCount}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <StatusPill status={c.customerStatus} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-3 sm:px-4">
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               href={`/customers/${c.id}`}
-                              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium sm:py-1.5 text-slate-700 transition-colors hover:bg-slate-50"
                             >
                               View
                             </Link>

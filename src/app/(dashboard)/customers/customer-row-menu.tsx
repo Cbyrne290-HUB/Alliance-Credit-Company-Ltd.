@@ -36,7 +36,7 @@ export function CustomerRowMenu({
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
         aria-label="More actions"
-        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+        className="flex h-10 w-10 items-center justify-center rounded-md text-slate-400 sm:h-8 sm:w-8 transition-colors hover:bg-slate-100 hover:text-slate-700"
       >
         <MoreVertical className="h-4 w-4" />
       </button>

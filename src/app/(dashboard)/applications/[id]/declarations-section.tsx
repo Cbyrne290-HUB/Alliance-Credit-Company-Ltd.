@@ -105,7 +105,7 @@ export function DeclarationsSection({
   onOpenImage: (label: string, url: string) => void;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
       <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">
         Signed Declarations
       </h2>

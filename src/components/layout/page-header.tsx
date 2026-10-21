@@ -17,12 +17,12 @@ export function PageHeader({
   });
 
   return (
-    <div className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-5">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight text-slate-900">
+    <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-4 sm:px-8 sm:py-5">
+      <div className="min-w-0">
+        <h1 className="text-lg max-sm:truncate font-semibold tracking-tight text-slate-900">
           {title}
         </h1>
-        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400 max-sm:flex-wrap">
           {breadcrumb.map((item, i) => (
             <span key={`${item.label}-${i}`} className="flex items-center gap-1.5">
               {i > 0 && <span className="text-slate-300">•</span>}
@@ -37,7 +37,7 @@ export function PageHeader({
           ))}
         </p>
       </div>
-      <p className="text-sm text-slate-500">{today}</p>
+      <p className="hidden text-sm text-slate-500 sm:block">{today}</p>
     </div>
   );
 }

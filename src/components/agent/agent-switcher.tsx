@@ -10,7 +10,7 @@ export function AgentSwitcher() {
   if (!canSwitch) return null;
 
   return (
-    <div className="flex items-center gap-2.5 border-b border-amber-200 bg-amber-50 px-8 py-2 print:hidden">
+    <div className="flex items-center gap-2.5 border-b border-amber-200 bg-amber-50 px-4 py-2 sm:px-8 print:hidden">
       <span className="text-xs font-medium uppercase tracking-wide text-amber-700">
         Viewing
       </span>
@@ -23,8 +23,8 @@ export function AgentSwitcher() {
             disabled={isSwitching}
             className={
               activeAgent === agent
-                ? "bg-amber-500 px-3 py-1 text-xs font-semibold text-white"
-                : "bg-white px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed"
+                ? "bg-amber-500 px-3 py-1.5 text-xs sm:py-1 font-semibold text-white"
+                : "bg-white px-3 py-1.5 text-xs sm:py-1 font-medium text-amber-700 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed"
             }
           >
             Agent {agent}

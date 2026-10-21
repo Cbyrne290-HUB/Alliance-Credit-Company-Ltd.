@@ -207,7 +207,7 @@ export function NewLoanForm({ customerId }: { customerId: string }) {
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-md bg-slate-900 px-4 py-3 text-sm sm:py-2 font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {saving ? "Creating Loan..." : "Create Loan"}
       </button>
@@ -250,7 +250,7 @@ function Field({
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+        className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-base text-slate-900 shadow-sm sm:text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
       />
     </div>
   );

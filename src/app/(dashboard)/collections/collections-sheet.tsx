@@ -320,7 +320,7 @@ export function CollectionsSheet({
         title="Collections"
         breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Collections" }]}
       />
-      <div className="px-8 py-8">
+      <div className="px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-5xl">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
@@ -343,7 +343,7 @@ export function CollectionsSheet({
           />
         </div>
 
-        <div className="mt-6 flex items-center gap-4">
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
           <WeekPicker
             selectedWeek={week}
             onWeekChange={handleWeekChange}
@@ -353,13 +353,13 @@ export function CollectionsSheet({
           <button
             type="button"
             onClick={() => window.print()}
-            className="shrink-0 rounded-md bg-[#2563eb] px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1d4ed8]"
+            className="shrink-0 rounded-md bg-[#2563eb] px-3.5 py-2.5 text-sm sm:py-2 font-medium text-white transition-colors hover:bg-[#1d4ed8]"
           >
             Print Sheet
           </button>
         </div>
 
-        <div className="mt-6 flex items-center gap-2">
+        <div className="mt-6 flex flex-wrap items-center gap-2">
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -376,16 +376,18 @@ export function CollectionsSheet({
           ))}
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
+        {/* Below sm the card drops overflow-hidden so the Save All / Retract
+            bar can stick to the bottom of the screen while scrolling rows. */}
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white shadow-sm sm:overflow-hidden">
+          <div className="overflow-x-auto max-sm:rounded-t-xl">
+            <table className="w-full text-sm sm:min-w-[640px]">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">Customer</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Amount Due</th>
-                  <th className="px-4 py-3">Balance</th>
-                  <th className="px-4 py-3" />
+                  <th className="px-3 py-3 sm:px-4">Customer</th>
+                  <th className="hidden px-4 py-3 sm:table-cell">Status</th>
+                  <th className="px-3 py-3 sm:px-4">Amount Due</th>
+                  <th className="px-3 py-3 sm:px-4">Balance</th>
+                  <th className="px-3 py-3 sm:px-4" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -409,9 +411,11 @@ export function CollectionsSheet({
 
                   return (
                     <tr key={loan.loanId} className={error ? "bg-red-50/60" : ""}>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3 sm:px-4">
                         <div className="flex items-center gap-3">
-                          <Avatar name={loan.customerName} size="sm" />
+                          <span className="hidden sm:contents">
+                            <Avatar name={loan.customerName} size="sm" />
+                          </span>
                           <div>
                             <p className="font-medium text-slate-900">
                               {loan.customerName}
@@ -419,13 +423,16 @@ export function CollectionsSheet({
                             <p className="text-xs text-slate-400">
                               {loan.loanReference}
                             </p>
+                            {!isActive && (
+                              <p className="text-xs text-slate-400 sm:hidden">Cleared</p>
+                            )}
                           </div>
                         </div>
                         {error && (
                           <p className="mt-1 text-xs text-red-600">{error}</p>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="hidden px-4 py-3 sm:table-cell">
                         {isActive ? (
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             Ongoing
@@ -434,11 +441,12 @@ export function CollectionsSheet({
                           <span className="text-xs text-slate-400">Cleared</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3 sm:px-4">
                         {editable ? (
                           <input
                             type="number"
                             step="any"
+                            inputMode="decimal"
                             value={value}
                             onChange={(e) =>
                               setDrafts((prev) => ({
@@ -447,29 +455,29 @@ export function CollectionsSheet({
                               }))
                             }
                             disabled={savingLoanId === loan.loanId || isSavingAll || isRetracting}
-                            className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                            className="w-20 rounded-md border border-slate-300 px-2 py-2 text-base text-slate-900 sm:w-24 sm:py-1 sm:text-sm shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
                           />
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3 sm:px-4">
                         <span className="text-slate-900">
                           {formatCurrency(loan.balance)}
                         </span>
                         {isActive && loan.arrears > 0 && (
-                          <span className="ml-2 text-xs font-medium text-red-600">
+                          <span className="block text-xs font-medium text-red-600 sm:ml-2 sm:inline">
                             Arrears {formatCurrency(loan.arrears)}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 py-3 text-right sm:px-4">
                         {editable && (
                           <button
                             type="button"
                             onClick={() => handleSaveRow(loan.loanId)}
                             disabled={savingLoanId === loan.loanId || isSavingAll || isRetracting}
-                            className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium sm:px-2.5 sm:py-1 text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {savingLoanId === loan.loanId ? "Saving..." : "Save"}
                           </button>
@@ -492,13 +500,13 @@ export function CollectionsSheet({
             </p>
           )}
 
-          <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3">
+          <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:rounded-b-xl max-sm:bg-white max-sm:shadow-[0_-4px_8px_-4px_rgba(0,0,0,0.12)]">
             {filteredLoans.some((l) => l.status === "active") && (
               <button
                 type="button"
                 onClick={handleSaveAll}
                 disabled={isBusy}
-                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-md bg-slate-900 px-4 py-2.5 text-sm font-medium sm:py-2 text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSavingAll ? "Saving All..." : "Save All"}
               </button>
@@ -513,7 +521,7 @@ export function CollectionsSheet({
                 setShowRetractDialog(true);
               }}
               disabled={isBusy}
-              className="ml-auto rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="ml-auto rounded-md border border-red-300 bg-white px-4 py-2.5 text-sm sm:py-2 font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isRetracting ? "Retracting..." : "Retract Week"}
             </button>
